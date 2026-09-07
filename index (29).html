@@ -1,0 +1,3442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Jcbounce Followup</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  /* Design system v2 — modern palette, soft shadows, larger radii */
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --primary:#4338ca; --primary-dark:#312e81; --primary-light:#6366f1;
+    --ink:#1e1b3a; --paper:#f6f5fb;
+    --sky:#0ea5e9; --sky-dark:#0369a1;
+    --orange:#f97316; --orange-dark:#c2410c;
+    --emerald:#10b981; --emerald-dark:#047857;
+  }
+  body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#27253f;-webkit-font-smoothing:antialiased}
+  .hidden{display:none!important}
+  .fixed{position:fixed}.inset-0{inset:0}
+  .min-h-screen{min-height:100vh}
+  .flex{display:flex}.flex-1{flex:1 1 0%}
+  .items-center{align-items:center}
+  .justify-between{justify-content:space-between}
+  .justify-center{justify-content:center}
+  .justify-end{justify-content:flex-end}
+  .grid{display:grid}
+  .grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
+  .grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  @media (min-width:768px){.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media (min-width:768px){.md\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  @media (min-width:768px){.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .inline-block{display:inline-block}
+  .gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}
+  .space-y-3>*+*{margin-top:.75rem}.space-y-4>*+*{margin-top:1rem}
+  .col-span-2{grid-column:span 2 / span 2}
+  .p-3{padding:.75rem}.p-6{padding:1.5rem}.p-8{padding:2rem}
+  .px-3{padding-left:.75rem;padding-right:.75rem}
+  .px-4{padding-left:1rem;padding-right:1rem}
+  .px-6{padding-left:1.5rem;padding-right:1.5rem}
+  .py-1{padding-top:.25rem;padding-bottom:.25rem}
+  .py-2{padding-top:.5rem;padding-bottom:.5rem}
+  .py-3{padding-top:.75rem;padding-bottom:.75rem}
+  .mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}
+  .mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}
+  .mt-24{margin-top:6rem}.ml-2{margin-left:.5rem}
+  .mx-auto{margin-left:auto;margin-right:auto}
+  .max-w-sm{max-width:24rem}.max-w-md{max-width:28rem}.max-w-7xl{max-width:84rem}
+  .w-20{width:5rem}.w-80{width:20rem}.w-full{width:100%}
+  .min-w-full{min-width:100%}
+  .rounded{border-radius:.5rem}.rounded-lg{border-radius:.9rem}
+  .border{border:1px solid #e7e5f3}.border-t{border-top:1px solid #edecf7}
+  .shadow{box-shadow:0 1px 2px rgb(30 27 58 / .04),0 8px 24px -12px rgb(30 27 58 / .12)}
+  .overflow-x-auto{overflow-x:auto}
+  .font-bold{font-weight:800}.font-semibold{font-weight:650}
+  .text-xs{font-size:.75rem}.text-sm{font-size:.875rem}
+  .text-lg{font-size:1.125rem}.text-xl{font-size:1.3rem}
+  .text-2xl{font-size:1.6rem;letter-spacing:-.01em}.text-3xl{font-size:2.1rem;letter-spacing:-.02em}
+  .text-left{text-align:left}.text-center{text-align:center}
+  .opacity-90{opacity:.92}
+  .bg-white{background:#fff}
+  .bg-gray-50{background:#faf9fd}.bg-gray-100{background:var(--paper)}
+  .bg-black\/40{background:rgb(30 27 58 / .45)}
+  .bg-slate-800{background:linear-gradient(135deg,var(--primary-dark),var(--primary))}
+  .bg-sky-500{background:linear-gradient(135deg,#0ea5e9,#0369a1)}
+  .bg-sky-600{background:var(--sky-dark)}
+  .bg-orange-500{background:linear-gradient(135deg,#fb923c,#c2410c)}
+  .bg-emerald-600{background:linear-gradient(135deg,#34d399,#047857)}
+  .bg-red-100{background:#fef1f2}.bg-green-100{background:#ecfdf5}
+  .text-white{color:#fff}
+  .text-gray-400{color:#9ca3af}.text-gray-500{color:#726f92}.text-gray-600{color:#57547a}
+  .text-red-300{color:#fecdd3}.text-red-500{color:#ef4444}.text-red-800{color:#9f1239}
+  .text-green-800{color:#065f46}.text-sky-300{color:#bae6fd}
+  a{text-decoration:none;color:inherit}
+  .hover\:text-sky-300:hover{color:#bae6fd}
+  .hover\:text-red-100:hover{color:#fecdd3}
+  .hover\:bg-slate-700:hover{filter:brightness(1.12)}
+  input,select,textarea{font:inherit;color:inherit}
+  input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],select,textarea{
+    transition:border-color .15s,box-shadow .15s;
+  }
+  input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input[type=date]:focus,select:focus,textarea:focus{
+    outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgb(99 102 241 / .15);
+  }
+  table{border-collapse:collapse;width:100%}
+  th,td{text-align:left}
+  thead th{text-transform:uppercase;font-size:.7rem;letter-spacing:.05em;font-weight:700;color:#8481a3}
+  tbody tr{transition:background .12s}
+  tbody tr:hover{background:#faf9ff}
+  button{cursor:pointer;font:inherit;border:none;transition:filter .12s,transform .12s,box-shadow .12s}
+  button:not(.rangePresetBtn):not(.sortableCol *):active{transform:translateY(1px)}
+  .activePreset{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important;box-shadow:0 4px 10px -4px rgb(67 56 202 / .5)}
+  #dateRangeBar{border-radius:0 0 1rem 1rem}
+  #dateRangeBar button.rangePresetBtn{background:#fff;border:1px solid #e2e0f0;color:#4b4870;border-radius:999px;padding:6px 14px;font-weight:600}
+  #dateRangeBar button.rangePresetBtn:hover{border-color:var(--primary-light);color:var(--primary)}
+  #dateRangeBar input[type=date]{border-radius:999px;border:1px solid #e2e0f0}
+  #dateRangeBar #applyCustomRangeBtn{border-radius:999px;font-weight:600}
+  .kpi-card{position:relative;overflow:hidden}
+  .kpi-card::after{content:"";position:absolute;right:-20px;top:-20px;width:110px;height:110px;border-radius:50%;background:rgb(255 255 255 / .12)}
+  .kpi-icon{width:38px;height:38px;border-radius:10px;background:rgb(255 255 255 / .2);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .outcome-chip{background:#faf9ff;border:1px solid #edecf7;border-radius:.9rem;padding:14px}
+  .outcome-bar-track{background:#edecf7;border-radius:999px;overflow:hidden;height:8px;margin-top:8px}
+  .outcome-bar-fill{background:var(--primary);height:100%;border-radius:999px}
+
+  /* ── Script Book ── */
+  .sb-section{scroll-margin-top:64px;margin-bottom:28px}
+  .sb-section-title{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .sb-section-num{width:30px;height:30px;flex:0 0 auto;border-radius:9px;background:linear-gradient(135deg,var(--primary-light),var(--primary));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem}
+  .script-card{background:#fff;border:1px solid #edecf7;border-left:5px solid var(--primary);border-radius:.9rem;padding:18px 20px;margin-bottom:12px;box-shadow:0 1px 2px rgb(30 27 58 / .03)}
+  .script-card.accent-emerald{border-left-color:var(--emerald)}
+  .script-card.accent-sky{border-left-color:var(--sky)}
+  .script-card.accent-orange{border-left-color:var(--orange)}
+  .script-card.accent-gray{border-left-color:#94a1b2}
+  .script-card.accent-purple{border-left-color:#8b5cf6}
+  .script-card.accent-rose{border-left-color:#e11d48}
+  .script-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#8481a3;margin-bottom:8px}
+  .script-quote{font-style:italic;color:#27253f;line-height:1.65;font-size:.98rem}
+  .script-quote + .script-quote{margin-top:10px}
+  .sb-fill{background:#eef2ff;color:var(--primary-dark);padding:1px 7px;border-radius:6px;font-weight:750;font-style:normal;white-space:nowrap}
+  .script-log{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:var(--ink);color:#fff;font-size:.72rem;font-weight:750;padding:5px 12px;border-radius:999px;letter-spacing:.02em}
+  .sb-hooktable td:first-child{font-weight:700;color:var(--ink);white-space:nowrap}
+  .sb-golden{background:linear-gradient(135deg,#fff7ed,#fffaf3);border:1px solid #fed7aa;border-radius:1rem;padding:20px 22px}
+  .sb-golden li{margin-bottom:10px;line-height:1.5}
+  .sb-golden li:last-child{margin-bottom:0}
+  .sb-footer-reminder{background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:1px solid #ddd6fe;border-radius:1rem;padding:18px 20px;text-align:center;font-weight:650;color:var(--primary-dark)}
+</style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- ═══════════════ LOGIN VIEW ═══════════════ -->
+  <div id="loginView" class="hidden">
+    <div class="max-w-sm mx-auto mt-24 bg-white p-8 rounded-lg shadow" style="border-top:4px solid var(--primary)">
+      <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--primary-light),var(--primary));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:#fff;font-weight:800;font-size:18px">Jc</div>
+      <h1 class="text-xl font-bold mb-6 text-center">Jcbounce Followup</h1>
+      <div id="errorBox" class="hidden mb-4 bg-red-100 text-red-800 px-3 py-2 rounded text-sm"></div>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="text-sm text-gray-600">Email</label>
+          <input type="email" id="email" required class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Password</label>
+          <input type="password" id="password" required class="w-full border rounded px-3 py-2">
+        </div>
+        <button class="w-full bg-slate-800 text-white py-2 rounded hover:bg-slate-700" style="font-weight:650">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="forcePasswordView" class="hidden">
+    <div class="max-w-sm mx-auto mt-24 bg-white p-8 rounded-lg shadow" style="border-top:4px solid var(--primary)">
+      <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--primary-light),var(--primary));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:#fff;font-weight:800;font-size:18px">Jc</div>
+      <h1 class="text-xl font-bold mb-2 text-center">Set a New Password</h1>
+      <p class="text-sm text-gray-500 mb-6 text-center">For security, you need to set your own password before continuing.</p>
+      <div id="forcePwErrorBox" class="hidden mb-4 bg-red-100 text-red-800 px-3 py-2 rounded text-sm"></div>
+      <form id="forcePasswordForm" class="space-y-4">
+        <div>
+          <label class="text-sm text-gray-600">New Password</label>
+          <input type="password" id="fp_new_password" required minlength="8" class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Confirm New Password</label>
+          <input type="password" id="fp_confirm_password" required minlength="8" class="w-full border rounded px-3 py-2">
+        </div>
+        <button class="w-full bg-slate-800 text-white py-2 rounded hover:bg-slate-700" style="font-weight:650">Set Password &amp; Continue</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MAIN APP (post-login) ═══════════════ -->
+  <div id="appShell" class="hidden">
+    <div id="stickyHeader" style="position:sticky;top:0;z-index:40">
+      <nav id="nav" class="bg-slate-800 text-white px-6 py-3 flex items-center justify-between"></nav>
+
+      <div id="dateRangeBar" class="bg-white shadow px-6 py-3" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+        <span class="font-semibold text-sm">Date Range:</span>
+        <button data-preset="yesterday" class="rangePresetBtn text-xs px-3 py-1 rounded border">Yesterday</button>
+        <button data-preset="today" class="rangePresetBtn text-xs px-3 py-1 rounded border">Today</button>
+        <button data-preset="mtd" class="rangePresetBtn text-xs px-3 py-1 rounded border">MTD</button>
+        <span style="display:flex;align-items:center;gap:6px">
+          <input type="date" id="rangeStartInput" class="border rounded px-2 py-1 text-xs">
+          <span class="text-xs">to</span>
+          <input type="date" id="rangeEndInput" class="border rounded px-2 py-1 text-xs">
+          <button id="applyCustomRangeBtn" class="text-xs px-3 py-1 rounded bg-slate-800 text-white">Apply</button>
+        </span>
+        <span id="rangeSummaryLabel" class="text-xs text-gray-500" style="margin-left:auto"></span>
+      </div>
+    </div>
+
+    <main class="p-6 max-w-7xl mx-auto">
+
+      <!-- ── Dashboard ── -->
+      <section id="view-dashboard" class="hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1.5rem">
+          <h1 class="text-2xl font-bold" style="margin-bottom:0">Dashboard</h1>
+          <div style="position:relative">
+            <button id="dashSalonFilterToggle" type="button" class="text-xs px-3 py-2 rounded border" style="background:#fff">
+              Filter by Salon <span id="dashSalonFilterLabel" class="text-gray-500">(All)</span> ▾
+            </button>
+            <div id="dashSalonFilterDropdown" class="hidden" style="position:absolute;top:100%;right:0;margin-top:6px;background:white;border:1px solid #e7e5f3;border-radius:.9rem;box-shadow:0 8px 24px -12px rgb(30 27 58 / .2);padding:12px;z-index:50;min-width:240px;max-height:280px;overflow-y:auto">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                <button id="dashSalonSelectAll" type="button" class="text-xs px-2 py-1 rounded border">All</button>
+                <button id="dashSalonClearAll" type="button" class="text-xs px-2 py-1 rounded border">None</button>
+              </div>
+              <div id="dashSalonFilterBox">Loading…</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div class="bg-orange-500 text-white rounded-lg p-6 kpi-card">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div id="pendingCount" class="text-3xl font-bold">…</div>
+            <div class="text-sm opacity-90">Total Due (Selected Range)</div>
+          </div>
+          <div class="bg-sky-500 text-white rounded-lg p-6 kpi-card">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+            <div id="callsToday" class="text-3xl font-bold">…</div>
+            <div class="text-sm opacity-90">Calls Made (Selected Range)</div>
+          </div>
+          <div class="rounded-lg p-6 kpi-card text-white" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+            <div id="bookingRate" class="text-3xl font-bold">…</div>
+            <div class="text-sm opacity-90">Booking Rate (of calls made)</div>
+          </div>
+          <div class="bg-emerald-600 text-white rounded-lg p-6 kpi-card">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+            <div id="callsMtd" class="text-3xl font-bold">…</div>
+            <div class="text-sm opacity-90">Calls Completed MTD</div>
+          </div>
+        </div>
+
+        <a href="#followups" class="inline-block bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700 mb-8">
+          Go to Follow-up List →
+        </a>
+
+        <!-- Call outcomes — connection effectiveness, separate from what happens after -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 class="font-semibold mb-4">Call Outcomes (Selected Range) — Connection Effectiveness</h2>
+          <div id="callOutcomeChipsBox" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <span class="text-gray-400 text-sm">Loading…</span>
+          </div>
+        </div>
+
+        <!-- Follow-up actions — what happens once a call actually connects -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 class="font-semibold mb-4">Follow-up Actions (Selected Range) — What Happens Once Connected</h2>
+          <div id="outcomeChipsBox" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <span class="text-gray-400 text-sm">Loading…</span>
+          </div>
+        </div>
+
+        <!-- Day-wise calls (last 30 days including today) -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 class="font-semibold mb-4">Day-wise Calls — Last 30 Days (Including Today)</h2>
+          <div style="position:relative;height:360px">
+            <canvas id="dailyCallsChart"></canvas>
+          </div>
+        </div>
+
+
+        <!-- Center + service-wise summary -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8 overflow-x-auto">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <h2 class="font-semibold">Center + Service-wise Pending Summary</h2>
+            <div style="display:flex;gap:8px">
+              <button id="svcExpandAll" type="button" class="text-xs px-3 py-1 rounded border">Expand All</button>
+              <button id="svcCollapseAll" type="button" class="text-xs px-3 py-1 rounded border">Collapse All</button>
+            </div>
+          </div>
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 text-left text-gray-600">
+              <tr><th class="p-3">Center</th><th class="p-3">Service Category</th><th class="p-3">Pending (Due)</th><th class="p-3">Total Records</th><th class="p-3">Today</th><th class="p-3">Yesterday</th><th class="p-3">MTD</th><th class="p-3">Total Calls</th><th class="p-3">Appointment Booked (MTD)</th></tr>
+            </thead>
+            <tbody id="tblServiceSummaryBody">
+              <tr><td colspan="9" class="p-3 text-center text-gray-400">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Center-wise call type (client response) matrix -->
+        <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
+          <h2 class="font-semibold mb-4">Center-wise Call Type Summary — How Clients Are Responding</h2>
+          <div id="tblCallTypeMatrix"><p class="text-gray-400 p-3">Loading…</p></div>
+        </div>
+      </section>
+
+      <!-- ── Follow-ups ── -->
+
+      <section id="view-followups" class="hidden">
+        <h1 class="text-2xl font-bold mb-4">List of Clients to Follow Up</h1>
+        <div id="fuSuccessBox" class="hidden mb-4 bg-green-100 text-green-800 px-4 py-2 rounded"></div>
+        <div class="mb-4" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <input id="searchInput" type="text" placeholder="Search name, mobile, guest code..."
+                 class="border rounded px-3 py-2 w-80">
+          <button id="searchBtn" class="bg-slate-800 text-white px-4 py-2 rounded">Search</button>
+          <button id="remindersToggleBtn" type="button" class="text-sm px-4 py-2 rounded border" style="background:#fff">
+            🔔 Reminders Due
+          </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 text-left text-gray-600">
+              <tr>
+                <th class="p-3">Action</th>
+                <th class="p-3 sortableCol" data-col="status" style="cursor:pointer;position:relative">
+                  Status <span class="sortArrow"></span>
+                  <button id="statusFilterToggle" type="button" style="margin-left:4px;font-size:11px;padding:1px 5px;border:1px solid #cbd5e1;border-radius:3px;background:white">▾</button>
+                  <div id="statusFilterDropdown" class="hidden" style="position:absolute;top:100%;left:0;background:white;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);padding:10px;z-index:50;min-width:220px;max-height:260px;overflow-y:auto;font-weight:normal;text-transform:none">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                      <button id="statusSelectAll" type="button" class="text-xs px-2 py-1 rounded border">All</button>
+                      <button id="statusClearAll" type="button" class="text-xs px-2 py-1 rounded border">None</button>
+                    </div>
+                    <div id="statusFilterBox">Loading…</div>
+                  </div>
+                </th>
+                <th class="p-3 sortableCol" data-col="guest_name" style="cursor:pointer">Guest Name <span class="sortArrow"></span></th>
+                <th class="p-3 sortableCol" data-col="guest_code" style="cursor:pointer">Guest Code <span class="sortArrow"></span></th>
+                <th class="p-3 sortableCol" data-col="mobile_number" style="cursor:pointer">Mobile <span class="sortArrow"></span></th>
+                <th class="p-3 sortableCol" data-col="brand" style="cursor:pointer">Brand <span class="sortArrow"></span></th>
+                <th class="p-3 sortableCol" data-col="center" style="cursor:pointer;position:relative">
+                  Center <span class="sortArrow"></span>
+                  <button id="centerFilterToggle" type="button" style="margin-left:4px;font-size:11px;padding:1px 5px;border:1px solid #cbd5e1;border-radius:3px;background:white">▾</button>
+                  <div id="centerFilterDropdown" class="hidden" style="position:absolute;top:100%;left:0;background:white;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);padding:10px;z-index:50;min-width:220px;max-height:260px;overflow-y:auto;font-weight:normal;text-transform:none">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                      <button id="centerSelectAll" type="button" class="text-xs px-2 py-1 rounded border">All</button>
+                      <button id="centerClearAll" type="button" class="text-xs px-2 py-1 rounded border">None</button>
+                    </div>
+                    <div id="centerFilterBox">Loading…</div>
+                  </div>
+                </th>
+                <th class="p-3 sortableCol" data-col="father" style="cursor:pointer">Category <span class="sortArrow"></span></th>
+                <th class="p-3 sortableCol" data-col="service_name" style="cursor:pointer">Service <span class="sortArrow"></span></th>
+                <th class="p-3 sortableCol" data-col="last_employee_served" style="cursor:pointer">Last Employee <span class="sortArrow"></span></th>
+                <th class="p-3 sortableCol" data-col="date_last_served" style="cursor:pointer">Last Served <span class="sortArrow"></span></th>
+                <th class="p-3 sortableCol" data-col="next_reachout" style="cursor:pointer">Next Reachout <span class="sortArrow"></span></th>
+              </tr>
+            </thead>
+            <tbody id="clientsBody">
+              <tr><td colspan="13" class="p-6 text-center text-gray-400">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Other Calls (merged dashboard + working list) ── -->
+      <section id="view-other_calls" class="hidden">
+        <h1 class="text-2xl font-bold mb-4">Other Calls</h1>
+        <div id="ocSuccessBox" class="hidden mb-4 bg-green-100 text-green-800 px-4 py-2 rounded"></div>
+        <div id="ocErrorBox" class="hidden mb-4 bg-red-100 text-red-800 px-4 py-2 rounded"></div>
+
+        <!-- Filter bar -->
+        <div class="mb-4" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="position:relative">
+            <button id="ocTypeFilterToggle" type="button" class="text-sm px-4 py-2 rounded border" style="background:#fff">
+              Calls Type <span id="ocTypeFilterLabel" class="text-gray-500">(All)</span> ▾
+            </button>
+            <div id="ocTypeFilterDropdown" class="hidden" style="position:absolute;top:100%;left:0;margin-top:6px;background:white;border:1px solid #e7e5f3;border-radius:.9rem;box-shadow:0 8px 24px -12px rgb(30 27 58 / .2);padding:12px;z-index:50;min-width:220px;max-height:280px;overflow-y:auto">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                <button id="ocTypeSelectAll" type="button" class="text-xs px-2 py-1 rounded border">All</button>
+                <button id="ocTypeClearAll" type="button" class="text-xs px-2 py-1 rounded border">None</button>
+              </div>
+              <div id="ocTypeFilterBox">Loading…</div>
+            </div>
+          </div>
+          <select id="ocMonthFilter" class="text-sm px-3 py-2 rounded border" style="background:#fff">
+            <option value="">Month (All)</option>
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+          <select id="ocYearFilter" class="text-sm px-3 py-2 rounded border" style="background:#fff">
+            <option value="">Year (All)</option>
+          </select>
+          <input id="ocSearchInput" type="text" placeholder="Search name, mobile..." class="border rounded px-3 py-2 w-80">
+          <button id="ocSearchBtn" class="bg-slate-800 text-white px-4 py-2 rounded">Search</button>
+          <button id="ocRemindersToggleBtn" type="button" class="text-sm px-4 py-2 rounded border" style="background:#fff">
+            🔔 Reminders Due
+          </button>
+        </div>
+
+        <!-- Section 1: KPI cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div class="bg-orange-500 text-white rounded-lg p-6 kpi-card">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div id="ocTotalLeads" class="text-3xl font-bold">0</div>
+            <div class="text-sm opacity-90">Total Leads</div>
+          </div>
+          <div class="bg-sky-500 text-white rounded-lg p-6 kpi-card">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+            <div id="ocCallsMade" class="text-3xl font-bold">0</div>
+            <div class="text-sm opacity-90">Calls Made (Selected Range)</div>
+          </div>
+          <div class="rounded-lg p-6 kpi-card text-white" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+            <div id="ocBookingRate" class="text-3xl font-bold">—</div>
+            <div class="text-sm opacity-90">Booking Rate (of calls made)</div>
+          </div>
+          <div class="bg-emerald-600 text-white rounded-lg p-6 kpi-card">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+            <div id="ocCallsMtd" class="text-3xl font-bold">0</div>
+            <div class="text-sm opacity-90">Calls Completed MTD</div>
+          </div>
+        </div>
+
+        <!-- Section 1b: Call Outcomes / Follow-up Actions breakdown -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="font-semibold mb-4">Call Outcomes (Selected Range) — Connection Effectiveness</h2>
+          <div id="ocCallOutcomeChipsBox" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <p class="text-gray-400 text-sm">Loading…</p>
+          </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 class="font-semibold mb-4">Follow-up Actions (Selected Range) — What Happens Once Connected</h2>
+          <div id="ocFollowupActionChipsBox" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <p class="text-gray-400 text-sm">Loading…</p>
+          </div>
+        </div>
+
+        <!-- Section 2: Day-wise chart -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 class="font-semibold mb-4">Other Calls — Day-wise by Calls Type (Last 30 Days, Including Today)</h2>
+          <div style="position:relative;height:360px">
+            <canvas id="otherCallsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Section 3: Leads table -->
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+          <h2 class="font-semibold p-6 pb-0">Leads</h2>
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 text-left text-gray-600">
+              <tr>
+                <th class="p-3">Action</th>
+                <th class="p-3 ocSortableCol" data-col="calls_type" style="cursor:pointer">Calls Type <span class="ocSortArrow"></span></th>
+                <th class="p-3 ocSortableCol" data-col="guest_name" style="cursor:pointer">Guest Name <span class="ocSortArrow"></span></th>
+                <th class="p-3 ocSortableCol" data-col="mobile_number" style="cursor:pointer">Mobile <span class="ocSortArrow"></span></th>
+                <th class="p-3 ocSortableCol" data-col="brand" style="cursor:pointer">Brand <span class="ocSortArrow"></span></th>
+                <th class="p-3" style="position:relative">
+                  <span class="ocSortableCol" data-col="center" style="cursor:pointer">Center <span class="ocSortArrow"></span></span>
+                  <button id="ocCenterFilterToggle" type="button" class="text-gray-400" style="margin-left:4px">▾</button>
+                  <div id="ocCenterFilterDropdown" class="hidden" style="position:absolute;top:100%;left:0;margin-top:6px;background:white;border:1px solid #e7e5f3;border-radius:.9rem;box-shadow:0 8px 24px -12px rgb(30 27 58 / .2);padding:12px;z-index:50;min-width:220px;max-height:280px;overflow-y:auto;font-weight:normal">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                      <button id="ocCenterSelectAll" type="button" class="text-xs px-2 py-1 rounded border">All</button>
+                      <button id="ocCenterClearAll" type="button" class="text-xs px-2 py-1 rounded border">None</button>
+                    </div>
+                    <div id="ocCenterFilterBox">Loading…</div>
+                  </div>
+                </th>
+                <th class="p-3 ocSortableCol" data-col="last_visit_date" style="cursor:pointer">Last Visit/Lead Date <span class="ocSortArrow"></span></th>
+                <th class="p-3 ocSortableCol" data-col="last_visit_date" style="cursor:pointer">Month <span class="ocSortArrow"></span></th>
+                <th class="p-3 ocSortableCol" data-col="last_visit_date" style="cursor:pointer">Year <span class="ocSortArrow"></span></th>
+                <th class="p-3">Last Outcome</th>
+              </tr>
+            </thead>
+            <tbody id="ocLeadsBody">
+              <tr><td colspan="11" class="p-6 text-center text-gray-400">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Other Calls Upload (restricted — few users only) ── -->
+      <section id="view-other_calls_upload" class="hidden">
+        <h1 class="text-2xl font-bold mb-4">Other Calls — Upload</h1>
+        <p class="text-sm text-gray-500 mb-4">This page is only visible to admins and users granted upload access (see Users & Access). Uploaded leads appear immediately on the Other Calls page.</p>
+
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="font-semibold mb-2">Upload Leads</h2>
+          <p class="text-sm text-gray-500 mb-3">Excel file with columns: Brand, Center, Guestname, MobileNumber, Last Visit/Lead Date, Month, Calls Type. The "Calls Type" per row (Lapser / Whatsapp / Instagram / New Clients) comes straight from the file.</p>
+          <div id="ocUploadModeWrap" class="mb-3 hidden" style="font-size:0.875rem">
+            <label style="margin-right:16px;cursor:pointer">
+              <input type="radio" name="ocUploadMode" value="insert" checked> Add to existing data
+            </label>
+            <label style="cursor:pointer;color:#b91c1c">
+              <input type="radio" name="ocUploadMode" value="wipe"> Wipe all existing leads and upload this file
+            </label>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <input type="file" id="ocUploadInput" accept=".xlsx,.xls" class="text-sm">
+            <button id="ocUploadBtn" class="bg-slate-800 text-white px-4 py-2 rounded text-sm">Upload</button>
+            <span id="ocUploadStatus" class="text-sm text-gray-500"></span>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="view-users" class="hidden">
+        <h1 class="text-2xl font-bold mb-4">Users & Access</h1>
+        <p class="text-sm text-gray-500 mb-4">Shared with your other product (public.profiles).</p>
+        <div id="usersMsgBox" class="hidden mb-4 px-4 py-2 rounded"></div>
+
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 class="font-semibold mb-3">Add User</h2>
+          <form id="createUserForm" class="grid grid-cols-2 gap-3">
+            <input id="u_full_name" placeholder="Full Name" required class="border rounded px-3 py-2">
+            <input id="u_email" type="email" placeholder="Email" required class="border rounded px-3 py-2">
+            <input id="u_password" type="password" placeholder="Temp Password" required minlength="8" value="admin@123" class="border rounded px-3 py-2">
+            <select id="u_role" required class="border rounded px-3 py-2">
+              <option value="staff">Staff</option>
+              <option value="manager">Manager (scoped to salons below)</option>
+              <option value="it">IT</option>
+              <option value="admin">Admin (full access)</option>
+            </select>
+            <select id="u_hierarchy_role" class="border rounded px-3 py-2">
+              <option value="">— No hierarchy tier —</option>
+              <option value="Salon">Salon</option>
+              <option value="Salon Staff">Salon Staff</option>
+              <option value="CENTER">Center User</option>
+              <option value="AM">Area Manager (AM)</option>
+              <option value="NSH">NSH / NSM</option>
+              <option value="Cluster Head">Cluster Head</option>
+              <option value="HR">HR</option>
+              <option value="HR Head">HR Head</option>
+              <option value="Head Office">Head Office</option>
+              <option value="IT">IT</option>
+              <option value="Operations">Operations</option>
+              <option value="CEO">CEO</option>
+              <option value="Other">Other</option>
+            </select>
+            <input id="u_access_salons" placeholder="Salon codes, comma-separated (e.g. BANDRA PALI, KANDIVALI)"
+                   class="border rounded px-3 py-2 col-span-2">
+            <button class="col-span-2 bg-slate-800 text-white py-2 rounded">Create User</button>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 text-left text-gray-600">
+              <tr><th class="p-3">Name</th><th class="p-3">Email</th><th class="p-3">Role</th>
+                  <th class="p-3">Hierarchy</th><th class="p-3">Access Salons</th><th class="p-3">Status</th><th class="p-3">Can Upload (Other Calls)</th><th class="p-3">Actions</th></tr>
+            </thead>
+            <tbody id="usersBody"><tr><td colspan="8" class="p-6 text-center text-gray-400">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Help: How to Use the Calling System ── -->
+      <section id="view-help" class="hidden">
+        <h1 class="text-2xl font-bold mb-4">How to Use the Calling System</h1>
+
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="font-semibold mb-3">Overview</h2>
+          <p class="text-sm mb-2" style="color:#4b4870">This dashboard runs two calling workflows:</p>
+          <ul class="text-sm space-y-1" style="color:#4b4870;list-style:disc;padding-left:1.25rem">
+            <li><strong>Follow-ups</strong> — guests due for a recall call, grouped by <strong>Service Category</strong>.</li>
+            <li><strong>Other Calls</strong> — leads uploaded from Excel, tagged by <strong>Calls Type</strong> (Lapser / Whatsapp / Instagram / New Clients).</li>
+          </ul>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="font-semibold mb-2">Follow-ups: call frequency by service category</h2>
+          <p class="text-sm mb-4" style="color:#4b4870">
+            Each service category has a natural repeat cycle. The system triggers the call
+            <strong>2 days before</strong> that cycle is actually due, so the guest can be reached and rebooked
+            before they lapse — not on the exact due day itself. A guest can appear more than once on the list
+            if they've taken more than one of these services — each service category runs on its own cycle and
+            is called separately. The due list stays open for a ±15-day window around the trigger date, so a
+            guest doesn't disappear if they're missed on the exact day.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 text-left text-gray-600">
+                <tr><th class="p-3">Service Category</th><th class="p-3">Service Cycle</th><th class="p-3">Call Triggered At</th></tr>
+              </thead>
+              <tbody>
+                <tr class="border-t"><td class="p-3">Haircut — Female</td><td class="p-3">75 days</td><td class="p-3">Day 73</td></tr>
+                <tr class="border-t"><td class="p-3">Haircut — Male</td><td class="p-3">30 days</td><td class="p-3">Day 28</td></tr>
+                <tr class="border-t"><td class="p-3">Global Colour — Female</td><td class="p-3">120 days</td><td class="p-3">Day 118</td></tr>
+                <tr class="border-t"><td class="p-3">Global Colour — Male</td><td class="p-3">45 days</td><td class="p-3">Day 43</td></tr>
+                <tr class="border-t"><td class="p-3">Keratin</td><td class="p-3">150 days</td><td class="p-3">Day 148</td></tr>
+                <tr class="border-t"><td class="p-3">Touch Up</td><td class="p-3">30 days</td><td class="p-3">Day 28</td></tr>
+                <tr class="border-t"><td class="p-3">Manicure</td><td class="p-3">30 days</td><td class="p-3">Day 28</td></tr>
+                <tr class="border-t"><td class="p-3">Pedicure</td><td class="p-3">30 days</td><td class="p-3">Day 28</td></tr>
+                <tr class="border-t"><td class="p-3">Waxing</td><td class="p-3">21 days</td><td class="p-3">Day 19</td></tr>
+                <tr class="border-t"><td class="p-3">Facial</td><td class="p-3">30 days</td><td class="p-3">Day 28</td></tr>
+                <tr class="border-t"><td class="p-3">Clean Up</td><td class="p-3">30 days</td><td class="p-3">Day 28</td></tr>
+                <tr class="border-t"><td class="p-3">Massage</td><td class="p-3">30 days</td><td class="p-3">Day 28</td></tr>
+                <tr class="border-t"><td class="p-3">Hair Spa</td><td class="p-3">30 days</td><td class="p-3">Day 28</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="font-semibold mb-2">Other Calls: leads by type</h2>
+          <p class="text-sm" style="color:#4b4870">
+            Leads are uploaded from Excel and tagged with a <strong>Calls Type</strong>: Lapser, Whatsapp,
+            Instagram, or New Clients. Work through the list assigned to your center and log every call using
+            the <strong>Action</strong> column, the same way as Follow-ups. Use the <strong>Reminders Due</strong>
+            toggle if a lead asks for a callback at a specific time.
+          </p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="font-semibold mb-3">Step-by-step: making a call</h2>
+          <ol class="text-sm space-y-2" style="color:#4b4870;list-style:decimal;padding-left:1.25rem">
+            <li>Open <strong>Follow-ups</strong> (or <strong>Other Calls</strong> for leads) from the sidebar.</li>
+            <li>The list shows guests currently due, sorted by center and category — the <strong>Pending (Due)</strong> column shows how many are waiting per category.</li>
+            <li>In the <strong>Action</strong> column, click <strong>Add Follow Up</strong> to open the Add Feedback form.</li>
+            <li>Select the <strong>Call Outcome</strong> (e.g., Connected, Not Connected, Call Disconnected).</li>
+            <li>If the outcome is Connected, a <strong>Follow-up Action</strong> field appears — select the result (e.g., Appointment Booked, Callback Requested, Not Interested).</li>
+            <li>Enter your name under <strong>Called By</strong> (mandatory).</li>
+            <li>If a booking was made, fill in the <strong>Next Appointment Date</strong>.</li>
+            <li>Add <strong>Remarks</strong> (mandatory) and click <strong>Save Feedback</strong>.</li>
+            <li>The guest drops off the due list once logged, and reappears when their next cycle comes up.</li>
+          </ol>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="font-semibold mb-2">Reminders Due</h2>
+      </section>
+
+      <!-- ── Script Book ── -->
+      <section id="view-scripts" class="hidden">
+        <h1 class="text-2xl font-bold mb-1">Script Book</h1>
+        <p class="text-sm text-gray-500 mb-4">
+          Ready-to-use scripts for every scenario on the dashboard — Follow-ups and Other Calls. Read the guest's
+          name and service from the screen before dialling — every script below has a <span class="sb-fill">[blank]</span>
+          to fill in live.
+        </p>
+
+        <!-- Golden Rules -->
+        <div class="sb-section" id="sb-golden" data-sb-search="golden rules smile confirm name good time overdue coming up log call outcome remarks">
+          <div class="sb-section-title"><div class="sb-section-num">★</div><h2 class="font-bold text-lg" style="color:var(--ink)">Golden Rules — Before Every Call</h2></div>
+          <ul class="sb-golden text-sm" style="color:#4b4870;list-style:none;padding-left:0">
+            <li>🙂 <strong>Smile before you dial</strong> — it changes your tone.</li>
+            <li>👤 <strong>Always confirm the guest's name first</strong> — "Am I speaking with <span class="sb-fill">[Guest Name]</span>?"</li>
+            <li>⏱️ <strong>Ask if it's a good time to speak.</strong></li>
+            <li>🚫 <strong>Never say "you're overdue"</strong> — the system calls guests <em>before</em> their cycle is due, so always frame it as "coming up" or "it's about that time," never "you missed it."</li>
+            <li>📝 <strong>Log the call immediately after</strong> — Call Outcome, Follow-up Action, Called By, and Remarks are mandatory.</li>
+          </ul>
+        </div>
+
+        <!-- Universal Opening -->
+        <div class="sb-section" id="sb-opening" data-sb-search="universal opening greeting hello good morning afternoon busy 30 seconds">
+          <div class="sb-section-title"><div class="sb-section-num">1</div><h2 class="font-bold text-lg" style="color:var(--ink)">Universal Opening (use for every Follow-up call)</h2></div>
+          <div class="script-card">
+            <div class="script-label">Say this</div>
+            <p class="script-quote">
+              "Good <span class="sb-fill">[morning/afternoon]</span>, am I speaking with <span class="sb-fill">[Guest Name]</span>?
+              Hi <span class="sb-fill">[Guest Name]</span>, this is <span class="sb-fill">[Your Name]</span> calling from
+              Jean Claude Biguine Salon &amp; Spa, <span class="sb-fill">[Centre Name]</span>. Hope you're doing well!
+              I'm calling because it's almost time for your <span class="sb-fill">[Service Name]</span> — you're usually
+              due around every <span class="sb-fill">[X]</span> days, and it's coming up for you. Would you like me to
+              check availability and book a slot?"
+            </p>
+          </div>
+          <div class="script-card accent-sky">
+            <div class="script-label">If they sound busy</div>
+            <p class="script-quote">"I'll be quick — just need 30 seconds to check a slot for you, is that okay?"</p>
+          </div>
+        </div>
+
+        <!-- Service-Specific Hook Lines -->
+        <div class="sb-section" id="sb-hooks" data-sb-search="service specific hook lines haircut female male global colour keratin touch up manicure pedicure waxing facial clean up massage hair spa">
+          <div class="sb-section-title"><div class="sb-section-num">2</div><h2 class="font-bold text-lg" style="color:var(--ink)">Service-Specific Hook Lines</h2></div>
+          <p class="text-sm mb-3" style="color:#4b4870">Use the Universal Opening above, then swap in the line for the service category showing on the dashboard.</p>
+          <div class="bg-white rounded-lg shadow overflow-x-auto">
+            <table class="min-w-full text-sm sb-hooktable">
+              <thead class="bg-gray-50 text-left text-gray-600">
+                <tr><th class="p-3">Service</th><th class="p-3">Hook line to use after the greeting</th></tr>
+              </thead>
+              <tbody>
+                <tr class="border-t"><td class="p-3">Haircut — Female</td><td class="p-3">"Your hair should be just about ready for a fresh cut and trim — shall I book you in this week?"</td></tr>
+                <tr class="border-t"><td class="p-3">Haircut — Male</td><td class="p-3">"It's about time for your regular haircut — want your usual slot, or should I check what's open?"</td></tr>
+                <tr class="border-t"><td class="p-3">Global Colour — Female</td><td class="p-3">"Your colour is due for a refresh soon — before the roots start showing, want me to book a slot?"</td></tr>
+                <tr class="border-t"><td class="p-3">Global Colour — Male</td><td class="p-3">"Your colour touch-up is coming up — shall I check availability this week?"</td></tr>
+                <tr class="border-t"><td class="p-3">Keratin</td><td class="p-3">"Your keratin treatment is due to be refreshed — it's usually best not to leave it too long after the 150-day mark, want to book?"</td></tr>
+                <tr class="border-t"><td class="p-3">Touch Up</td><td class="p-3">"Your root touch-up is coming up — want to get it done before the regrowth becomes too visible?"</td></tr>
+                <tr class="border-t"><td class="p-3">Manicure</td><td class="p-3">"Time for your next manicure! Should I book your usual time slot?"</td></tr>
+                <tr class="border-t"><td class="p-3">Pedicure</td><td class="p-3">"It's about time for your pedicure — shall I check what's free this week?"</td></tr>
+                <tr class="border-t"><td class="p-3">Waxing</td><td class="p-3">"Your waxing session is coming up on schedule — want me to book you in?"</td></tr>
+                <tr class="border-t"><td class="p-3">Facial</td><td class="p-3">"Your skin should be due for its next facial — shall I get you booked before the month ends?"</td></tr>
+                <tr class="border-t"><td class="p-3">Clean Up</td><td class="p-3">"Time for your next clean-up session — want your regular slot?"</td></tr>
+                <tr class="border-t"><td class="p-3">Massage</td><td class="p-3">"Your massage is coming up on your usual cycle — want to book some relaxation time this week?"</td></tr>
+                <tr class="border-t"><td class="p-3">Hair Spa</td><td class="p-3">"Your hair spa is due soon — shall I lock in a slot to keep your hair healthy?"</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="script-card accent-purple" style="margin-top:14px" data-sb-search="two services multiple both together one visit">
+            <div class="script-label">If the guest has more than one service due (e.g. Haircut + Manicure)</div>
+            <p class="script-quote">
+              "You've actually got two things coming up — your <span class="sb-fill">[Service A]</span> and your
+              <span class="sb-fill">[Service B]</span>. Want me to book both together in one visit?"
+            </p>
+            <p class="text-xs mt-2" style="color:#8481a3">Mention both in one call rather than calling twice.</p>
+          </div>
+        </div>
+
+        <!-- What to Say Based on the Answer -->
+        <div class="sb-section" id="sb-answer" data-sb-search="what to say based on answer yes book callback later no not interested price bad experience no answer switched off call drops disconnected">
+          <div class="sb-section-title"><div class="sb-section-num">3</div><h2 class="font-bold text-lg" style="color:var(--ink)">What to Say Based on the Answer</h2></div>
+
+          <div class="script-card accent-emerald">
+            <div class="script-label">They say YES, want to book</div>
+            <p class="script-quote">
+              "Great! Would <span class="sb-fill">[Day]</span> at <span class="sb-fill">[Time]</span> work for you? …
+              Perfect, you're booked for <span class="sb-fill">[Service]</span> on <span class="sb-fill">[Date]</span>
+              at <span class="sb-fill">[Time]</span>. See you then!"
+            </p>
+            <span class="script-log">Log: Connected → Appointment Booked · fill Next Appointment Date</span>
+          </div>
+
+          <div class="script-card accent-sky">
+            <div class="script-label">They say "call me later"</div>
+            <p class="script-quote">"No problem — when should I call you back?"</p>
+            <span class="script-log">Log: Connected → Callback Requested · set a reminder for that time</span>
+          </div>
+
+          <div class="script-card accent-orange">
+            <div class="script-label">They say NO / not interested</div>
+            <p class="script-quote">"No problem at all, thank you for telling me. Can I ask why — is it the price, or something else?"</p>
+            <ul class="text-sm mt-2" style="color:#4b4870;padding-left:1.1rem">
+              <li>Price → see <a href="#sb-objections" class="font-semibold" style="color:var(--primary)">If They Say No, below</a></li>
+              <li>Bad experience → see <a href="#sb-objections" class="font-semibold" style="color:var(--primary)">If They Say No, below</a></li>
+              <li>Just not interested → "Okay, no worries! We're here whenever you're ready. Have a good day!"</li>
+            </ul>
+            <span class="script-log">Log: Connected → Not Interested · write the reason in remarks</span>
+          </div>
+
+          <div class="script-card accent-gray">
+            <div class="script-label">No answer / phone switched off</div>
+            <p class="script-quote">Nothing to say — just log it.</p>
+            <span class="script-log">Log: Not Connected · write "no answer" or "switched off"</span>
+          </div>
+
+          <div class="script-card accent-gray">
+            <div class="script-label">Call drops in the middle</div>
+            <p class="script-quote">Call back once: "Hi, sorry, the call dropped. As I was saying…"</p>
+            <p class="text-xs mt-1" style="color:#8481a3">If it drops again:</p>
+            <span class="script-log">Log: Call Disconnected · write "call dropped, will try again"</span>
+          </div>
+        </div>
+
+        <!-- Other Calls (Leads) -->
+        <div class="sb-section" id="sb-other" data-sb-search="other calls leads lapser whatsapp instagram new client havent visited miss you offer 30 percent message">
+          <div class="sb-section-title"><div class="sb-section-num">4</div><h2 class="font-bold text-lg" style="color:var(--ink)">Other Calls (Leads)</h2></div>
+
+          <div class="script-card accent-purple">
+            <div class="script-label">Lapser (haven't visited in a while)</div>
+            <p class="script-quote">
+              "Hi <span class="sb-fill">[Name]</span>, this is <span class="sb-fill">[Your Name]</span> from Jean Claude
+              Biguine. We haven't seen you in a while and we miss you! You also have a special offer — flat 30% off
+              your next visit. Should I book you a slot?"
+            </p>
+          </div>
+
+          <div class="script-card accent-purple">
+            <div class="script-label">WhatsApp Lead</div>
+            <p class="script-quote">
+              "Hi <span class="sb-fill">[Name]</span>, this is <span class="sb-fill">[Your Name]</span> from Jean Claude
+              Biguine. I saw your message on WhatsApp about <span class="sb-fill">[Service]</span>. Are you still
+              looking to book? Which day works for you?"
+            </p>
+          </div>
+
+          <div class="script-card accent-purple">
+            <div class="script-label">Instagram Lead</div>
+            <p class="script-quote">
+              "Hi <span class="sb-fill">[Name]</span>, this is <span class="sb-fill">[Your Name]</span> from Jean Claude
+              Biguine. You messaged us on Instagram about <span class="sb-fill">[Service]</span>. I'd love to help you
+              book. Which day works for you?"
+            </p>
+          </div>
+
+          <div class="script-card accent-purple">
+            <div class="script-label">New Client</div>
+            <p class="script-quote">
+              "Hi <span class="sb-fill">[Name]</span>, this is <span class="sb-fill">[Your Name]</span> from Jean Claude
+              Biguine. Thank you for your interest! What service are you looking for? … Great, would
+              <span class="sb-fill">[Day]</span> work for you?"
+            </p>
+          </div>
+          <p class="text-xs" style="color:#8481a3">Log these the same way as Follow-ups (see "What to Say Based on the Answer" above).</p>
+        </div>
+
+        <!-- If They Say No -->
+        <div class="sb-section" id="sb-objections" data-sb-search="if they say no objections expensive bad experience somewhere else too busy price offers sorry">
+          <div class="sb-section-title"><div class="sb-section-num">5</div><h2 class="font-bold text-lg" style="color:var(--ink)">If They Say No — Simple Answers</h2></div>
+
+          <div class="script-card accent-rose">
+            <div class="script-label">"It's too expensive"</div>
+            <p class="script-quote">"I understand. We have some offers running — let me check if one fits you."</p>
+          </div>
+          <div class="script-card accent-rose">
+            <div class="script-label">"I had a bad experience"</div>
+            <p class="script-quote">"I'm really sorry about that. Please give us one more chance — I'll make sure your next visit is a good one."</p>
+          </div>
+          <div class="script-card accent-rose">
+            <div class="script-label">"I go somewhere else now"</div>
+            <p class="script-quote">"No problem, thanks for being honest. If you ever want to come back, we'd love to have you. Is it okay if we keep in touch?"</p>
+          </div>
+          <div class="script-card accent-rose">
+            <div class="script-label">"I'm too busy right now"</div>
+            <p class="script-quote">"I understand. Should I call you back later, or just message you the available slots?"</p>
+          </div>
+        </div>
+
+        <!-- Calling Back -->
+        <div class="sb-section" id="sb-callback" data-sb-search="calling back reminders due list callback requested">
+          <div class="sb-section-title"><div class="sb-section-num">6</div><h2 class="font-bold text-lg" style="color:var(--ink)">Calling Back (Reminders Due list)</h2></div>
+          <div class="script-card accent-sky">
+            <p class="script-quote">
+              "Hi <span class="sb-fill">[Name]</span>, this is <span class="sb-fill">[Your Name]</span> from Jean Claude
+              Biguine. You asked me to call you back about your <span class="sb-fill">[Service]</span>. Is now a good
+              time?"
+            </p>
+            <p class="text-xs mt-2" style="color:#8481a3">Then book as in "What to Say Based on the Answer" above.</p>
+          </div>
+        </div>
+
+        <!-- Ending the Call -->
+        <div class="sb-section" id="sb-closing" data-sb-search="ending the call thank you goodbye closing">
+          <div class="sb-section-title"><div class="sb-section-num">7</div><h2 class="font-bold text-lg" style="color:var(--ink)">Ending the Call</h2></div>
+          <div class="script-card accent-emerald">
+            <p class="script-quote">"Thank you so much, <span class="sb-fill">[Name]</span>. Have a great day!"</p>
+          </div>
+          <div class="sb-footer-reminder">📝 Don't forget: Fill in Called By and Remarks before the next call.</div>
+        </div>
+      </section>
+
+      <!-- ── Call Logs Report ── -->
+      <section id="view-call_logs" class="hidden">
+        <h1 class="text-2xl font-bold mb-1">Call Logs — Other Calls</h1>
+        <p class="text-sm text-gray-500 mb-4">Full history of logged calls against Other Calls leads (Lapser / Whatsapp / Instagram / New Clients), across all upload months. Search by mobile number or guest name to see what was said in a previous month, even after that lead has been wiped or re-uploaded.</p>
+
+        <!-- Summary: month-wise x calls-type-wise counts -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="font-semibold mb-3">Summary — Calls by Month &amp; Calls Type</h2>
+          <div id="clSummaryWrap" class="overflow-x-auto">
+            <p class="text-gray-400 text-sm">Loading summary…</p>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow p-4 mb-4" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div>
+            <label class="text-xs text-gray-500 block mb-1">Source</label>
+            <select id="clSourceFilter" class="border rounded px-3 py-2 text-sm">
+              <option value="all">All (Follow-ups + Other Calls)</option>
+              <option value="followups">Follow-ups only</option>
+              <option value="other_calls">Other Calls only</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 block mb-1">Month</label>
+            <select id="clMonthFilter" class="border rounded px-3 py-2 text-sm"><option value="">All Months</option></select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 block mb-1">Calls Type</label>
+            <select id="clTypeFilter" class="border rounded px-3 py-2 text-sm"><option value="">All Types</option></select>
+          </div>
+          <div style="flex:1;min-width:220px">
+            <label class="text-xs text-gray-500 block mb-1">Search (guest name or mobile number)</label>
+            <input id="clSearchInput" type="text" class="border rounded px-3 py-2 text-sm w-full" placeholder="e.g. Rahat or 9769471297">
+          </div>
+          <div style="align-self:flex-end">
+            <button id="clFilterBtn" class="bg-slate-800 text-white px-4 py-2 rounded text-sm">Apply</button>
+          </div>
+        </div>
+
+        <!-- Detail table -->
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 text-left text-gray-600">
+              <tr>
+                <th class="p-3">Date</th><th class="p-3">Source</th><th class="p-3">Guest Name</th><th class="p-3">Mobile</th>
+                <th class="p-3">Center</th><th class="p-3">Calls Type / Service</th><th class="p-3">Outcome</th>
+                <th class="p-3">Follow-up Action</th><th class="p-3">Remarks</th><th class="p-3">Next Booking</th>
+                <th class="p-3">Called By</th>
+              </tr>
+            </thead>
+            <tbody id="clLogsBody"><tr><td colspan="11" class="p-6 text-center text-gray-400">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Admin: Call Types ── -->
+      <section id="view-call_types" class="hidden">
+        <h1 class="text-2xl font-bold mb-4">Call Type Dropdown Options</h1>
+        <div id="typesMsgBox" class="hidden mb-4 px-4 py-2 rounded"></div>
+        <div class="bg-white rounded-lg shadow p-6 mb-8 max-w-md">
+          <form id="addTypeForm" class="flex gap-2">
+            <input id="t_label" placeholder="New call type label" required class="flex-1 border rounded px-3 py-2">
+            <input id="t_sort_order" type="number" value="1" class="w-20 border rounded px-3 py-2">
+            <button class="bg-slate-800 text-white px-4 py-2 rounded">Add</button>
+          </form>
+        </div>
+        <div class="bg-white rounded-lg shadow max-w-md">
+          <ul id="typesList"></ul>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════ Add Feedback Modal (follow-ups) ═══════════════ -->
+  <div id="feedbackModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <h2 class="font-bold text-lg mb-4">Add Feedback</h2>
+      <div id="modalError" class="hidden mb-3 bg-red-100 text-red-800 px-3 py-2 rounded text-sm"></div>
+      <form id="feedbackForm" class="space-y-3">
+        <div>
+          <label class="text-sm text-gray-600">Call Outcome</label>
+          <select id="f_call_outcome" required class="w-full border rounded px-3 py-2">
+            <option value="">Select...</option>
+            <option value="Not Called Yet">Not Called Yet</option>
+            <option value="No Answer">No Answer</option>
+            <option value="Number Busy">Number Busy</option>
+            <option value="Call Disconnected">Call Disconnected</option>
+            <option value="Switched Off">Switched Off</option>
+            <option value="Wrong Number">Wrong Number</option>
+            <option value="Connected">Connected</option>
+          </select>
+        </div>
+        <div id="f_action_wrap" class="hidden">
+          <label class="text-sm text-gray-600">Follow-up Action</label>
+          <select id="f_call_type_id" class="w-full border rounded px-3 py-2"></select>
+        </div>
+        <div id="f_others_wrap" class="hidden">
+          <label class="text-sm text-gray-600">Please specify <span class="text-red-500">*mandatory</span></label>
+          <input type="text" id="f_others_note" class="w-full border rounded px-3 py-2" placeholder="Enter the reason">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Called By <span class="text-red-500">*mandatory</span></label>
+          <input type="text" id="f_called_by_name" required minlength="2" class="w-full border rounded px-3 py-2" placeholder="Your name">
+        </div>
+        <div id="f_connected_extra_wrap" class="hidden space-y-3">
+          <div>
+            <label class="text-sm text-gray-600">Next Appointment Date (if applicable)</label>
+            <input type="date" id="f_next_booking_date" class="w-full border rounded px-3 py-2">
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">Remarks <span class="text-red-500">*mandatory</span></label>
+            <textarea id="f_remarks" required minlength="2" class="w-full border rounded px-3 py-2"></textarea>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" id="closeModalBtn" class="px-4 py-2 rounded border">Close</button>
+          <button type="submit" class="px-4 py-2 rounded bg-sky-600 text-white">Save Feedback</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Add Feedback Modal (other calls) ═══════════════ -->
+  <div id="ocFeedbackModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <h2 class="font-bold text-lg mb-1">Log Call</h2>
+      <p id="ocModalLeadLabel" class="text-sm text-gray-500 mb-4"></p>
+      <div id="ocModalError" class="hidden mb-3 bg-red-100 text-red-800 px-3 py-2 rounded text-sm"></div>
+      <form id="ocFeedbackForm" class="space-y-3">
+        <div>
+          <label class="text-sm text-gray-600">Call Outcome</label>
+          <select id="oc_call_outcome" required class="w-full border rounded px-3 py-2">
+            <option value="">Select...</option>
+            <option value="Not Called Yet">Not Called Yet</option>
+            <option value="No Answer">No Answer</option>
+            <option value="Number Busy">Number Busy</option>
+            <option value="Call Disconnected">Call Disconnected</option>
+            <option value="Switched Off">Switched Off</option>
+            <option value="Wrong Number">Wrong Number</option>
+            <option value="Connected">Connected</option>
+          </select>
+        </div>
+        <div id="oc_action_wrap" class="hidden">
+          <label class="text-sm text-gray-600">Follow-up Action</label>
+          <select id="oc_call_type_id" class="w-full border rounded px-3 py-2"></select>
+        </div>
+        <div id="oc_others_wrap" class="hidden">
+          <label class="text-sm text-gray-600">Please specify <span class="text-red-500">*mandatory</span></label>
+          <input type="text" id="oc_others_note" class="w-full border rounded px-3 py-2" placeholder="Enter the reason">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Called By <span class="text-red-500">*mandatory</span></label>
+          <input type="text" id="oc_called_by_name" required minlength="2" class="w-full border rounded px-3 py-2" placeholder="Your name">
+        </div>
+        <div id="oc_connected_extra_wrap" class="hidden space-y-3">
+          <div>
+            <label class="text-sm text-gray-600">Next Appointment Date (if applicable)</label>
+            <input type="date" id="oc_next_booking_date" class="w-full border rounded px-3 py-2">
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">Remarks <span class="text-red-500">*mandatory</span></label>
+            <textarea id="oc_remarks" required minlength="2" class="w-full border rounded px-3 py-2"></textarea>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" id="ocCloseModalBtn" class="px-4 py-2 rounded border">Close</button>
+          <button type="submit" class="px-4 py-2 rounded bg-sky-600 text-white">Save Call</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Edit User Modal ═══════════════ -->
+  <div id="editUserModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <h2 class="font-bold text-lg mb-4">Edit User</h2>
+      <div id="editUserError" class="hidden mb-3 bg-red-100 text-red-800 px-3 py-2 rounded text-sm"></div>
+      <form id="editUserForm" class="space-y-3">
+        <div>
+          <label class="text-sm text-gray-600">Full Name</label>
+          <input id="e_full_name" required class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Email (read-only)</label>
+          <input id="e_email" disabled class="w-full border rounded px-3 py-2 bg-gray-100">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Role</label>
+          <select id="e_role" required class="w-full border rounded px-3 py-2">
+            <option value="staff">Staff</option>
+            <option value="manager">Manager (scoped to salons below)</option>
+            <option value="it">IT</option>
+            <option value="admin">Admin (full access)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Hierarchy Tier</label>
+          <select id="e_hierarchy_role" class="w-full border rounded px-3 py-2">
+            <option value="">— No hierarchy tier —</option>
+            <option value="Salon">Salon</option>
+            <option value="Salon Staff">Salon Staff</option>
+            <option value="CENTER">Center User</option>
+            <option value="AM">Area Manager (AM)</option>
+            <option value="NSH">NSH / NSM</option>
+            <option value="Cluster Head">Cluster Head</option>
+            <option value="HR">HR</option>
+            <option value="HR Head">HR Head</option>
+            <option value="Head Office">Head Office</option>
+            <option value="IT">IT</option>
+            <option value="Operations">Operations</option>
+            <option value="CEO">CEO</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Access Salons (comma-separated salon codes)</label>
+          <input id="e_access_salons" class="w-full border rounded px-3 py-2">
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="e_can_upload" class="h-4 w-4">
+          <label for="e_can_upload" class="text-sm text-gray-600">Can upload Other Calls leads</label>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" id="closeEditUserBtn" class="px-4 py-2 rounded border">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded bg-sky-600 text-white">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Reset Password Modal ═══════════════ -->
+  <div id="resetPwModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-sm">
+      <h2 class="font-bold text-lg mb-4">Reset Password</h2>
+      <p id="resetPwFor" class="text-sm text-gray-600 mb-3"></p>
+      <div id="resetPwError" class="hidden mb-3 bg-red-100 text-red-800 px-3 py-2 rounded text-sm"></div>
+      <form id="resetPwForm" class="space-y-3">
+        <div>
+          <label class="text-sm text-gray-600">New Password</label>
+          <input id="rp_password" type="password" required minlength="8" value="admin@123" class="w-full border rounded px-3 py-2">
+        </div>
+        <p class="text-xs text-gray-400">User will be required to change this password on next login.</p>
+        <div class="flex justify-end gap-2">
+          <button type="button" id="closeResetPwBtn" class="px-4 py-2 rounded border">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded bg-orange-500 text-white">Set Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+// SUPABASE CLIENT — fill in from Supabase Dashboard → Project Settings → API
+// ─────────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://mldzrfkjfbgvvlcqiuir.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sZHpyZmtqZmJndnZsY3FpdWlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNjQzMzMsImV4cCI6MjA5ODY0MDMzM30.sLI-va54I96WBYNAGjI3YF_1Q-qHqsL_3JzA_gFyJKg";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let session = null;
+
+// Supabase auto-refreshes the underlying access token, but that refresh
+// only updates the client's internal storage — it does NOT update this
+// `session` variable on its own. admin-reset-password / admin-create-user
+// are called via plain fetch() using session.access_token, so without this
+// listener a token that refreshed in the background would leave this
+// variable holding an expired JWT, and those two calls would start failing
+// with "Not authenticated" while everything using supabase.from(...) kept
+// working fine (that path pulls the fresh token internally).
+supabase.auth.onAuthStateChange((_event, newSession) => {
+  session = newSession;
+});
+let profile = null;   // row from public.profiles — role, hierarchy_role, access_salons
+
+// ─────────────────────────────────────────────────────────────
+// PROFILE / AUTH HELPERS
+// (shared public.profiles table — same one your other product uses)
+// ─────────────────────────────────────────────────────────────
+async function getProfile(userId) {
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
+  if (error) { console.error("Profile fetch failed", error); return null; }
+  return data;
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  session = null; profile = null;
+  location.hash = "";
+  showLogin();
+}
+
+// Mirrors the HR app's client-side hasPerm() exactly, so both apps
+// agree on who counts as a delegated user-manager. Admin always
+// passes; otherwise checks the named boolean permission column
+// (accepts true / "TRUE" / "true", since some records were set via
+// import as strings).
+function hasPerm(col) {
+  if (!profile) return false;
+  if (profile.role === "admin") return true;
+  const v = profile[col];
+  return v === true || v === "TRUE" || v === "true";
+}
+
+// ─────────────────────────────────────────────────────────────
+// NAV BAR
+// ─────────────────────────────────────────────────────────────
+function renderNav(activePage) {
+  const nav = document.getElementById("nav");
+  const isAdmin = profile.role === "admin";
+  const canManageUsers = isAdmin || hasPerm("perm_user_management");
+  const canUpload = isAdmin || profile.can_upload_other_calls === true;
+  const adminLinks = `
+    ${canManageUsers ? `<a href="#users" class="${activePage === 'users' ? 'text-sky-300' : ''} hover:text-sky-300 text-sm">Users</a>` : ""}
+    ${isAdmin ? `<a href="#call_types" class="${activePage === 'call_types' ? 'text-sky-300' : ''} hover:text-sky-300 text-sm">Call Types</a>` : ""}
+  `;
+  const uploadLink = canUpload
+    ? `<a href="#other_calls_upload" class="${activePage === 'other_calls_upload' ? 'text-sky-300' : ''} hover:text-sky-300 text-sm">Other Calls Upload</a>`
+    : "";
+  nav.innerHTML = `
+    <div class="flex items-center gap-6">
+      <span class="font-bold">Jcbounce Followup</span>
+      <a href="#dashboard" class="${activePage === 'dashboard' ? 'text-sky-300' : ''} hover:text-sky-300 text-sm">Dashboard</a>
+      <a href="#followups" class="${activePage === 'followups' ? 'text-sky-300' : ''} hover:text-sky-300 text-sm">Follow-ups</a>
+      <a href="#other_calls" class="${activePage === 'other_calls' ? 'text-sky-300' : ''} hover:text-sky-300 text-sm">Other Calls</a>
+      <a href="#scripts" class="${activePage === 'scripts' ? 'text-sky-300' : ''} hover:text-sky-300 text-sm">Script Book</a>
+      <a href="#call_logs" class="${activePage === 'call_logs' ? 'text-sky-300' : ''} hover:text-sky-300 text-sm">Call Logs</a>
+      <a href="#help" class="${activePage === 'help' ? 'text-sky-300' : ''} hover:text-sky-300 text-sm">Help</a>
+      ${uploadLink}
+      ${adminLinks}
+    </div>
+    <div class="flex items-center gap-4 text-sm">
+      <span>${profile.full_name} (${profile.hierarchy_role || profile.role})</span>
+      <button id="logoutBtn" style="background:#ef4444;color:#fff;font-weight:650;padding:6px 16px;border-radius:8px;transition:background .15s" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">Logout</button>
+    </div>`;
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+}
+
+// ─────────────────────────────────────────────────────────────
+// ROUTER — shows one <section> based on location.hash
+// ─────────────────────────────────────────────────────────────
+// Users page: admin OR perm_user_management. Call Types page: strictly
+// admin, since call_types RLS itself only recognizes role='admin'.
+
+async function router() {
+  let page = (location.hash || "#dashboard").replace("#", "");
+  if (!["dashboard", "followups", "other_calls", "other_calls_upload", "users", "call_types", "help", "call_logs", "scripts"].includes(page)) page = "dashboard";
+  const canManageUsers = profile.role === "admin" || hasPerm("perm_user_management");
+  if (page === "users" && !canManageUsers) page = "dashboard";
+  if (page === "call_types" && profile.role !== "admin") page = "dashboard"; // call_types RLS is admin-only, not perm-aware
+  const canUpload = profile.role === "admin" || profile.can_upload_other_calls === true;
+  if (page === "other_calls_upload" && !canUpload) page = "other_calls";
+
+  document.querySelectorAll('main section').forEach(s => s.classList.add("hidden"));
+  document.getElementById(`view-${page}`).classList.remove("hidden");
+  renderNav(page);
+
+  if (page === "dashboard") await loadDashboard();
+  if (page === "followups") await loadFollowupsPage();
+  if (page === "other_calls") await loadOtherCallsPage();
+  if (page === "other_calls_upload") await loadOtherCallsUploadPage();
+  if (page === "users") await loadUsersPage();
+  if (page === "call_types") await loadCallTypesPage();
+  if (page === "call_logs") await loadCallLogsPage();
+  if (page === "scripts") await loadScriptsPage();
+}
+window.addEventListener("hashchange", router);
+
+// ─────────────────────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────────────────────
+if (typeof Chart !== "undefined" && typeof ChartDataLabels !== "undefined") {
+  Chart.register(ChartDataLabels);
+}
+
+let serviceSummaryControlsInitialized = false;
+let dashSalonFilterInitialized = false;
+let dashSelectedCenters = null; // null = all
+let lastOutcomeSummaryRaw = [];
+const CHART_PALETTE = ['#0ea5e9','#f97316','#059669','#ef4444','#a855f7','#eab308','#64748b','#14b8a6','#ec4899','#6366f1'];
+
+// Raw (unfiltered) results from the last fetch — the salon filter re-renders
+// from these without hitting the network again.
+let lastCenterSummaryRaw = [];
+let lastServiceSummaryRaw = [];
+let lastCallTypeSummaryRaw = [];
+
+async function loadDashboard() {
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+
+  // Day-wise table is always a FIXED last-30-days window (including today),
+  // independent of the shared date-range picker above.
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const thirtyDaysAgo = new Date(today); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+  const dailyStart = isoDate(thirtyDaysAgo);
+  const dailyEnd = isoDate(today);
+
+  const [{ data: mtdSummary, error: e0 }, { data: centerSummary, error: e1 }, { data: serviceSummary, error: e2 }, { data: callTypeSummary, error: e3 }, { data: dailyData, error: e4 }, { data: dailyConnData, error: e5 }, { data: outcomeSummary, error: e6 }] = await Promise.all([
+    supabase.rpc("get_center_call_type_summary", { p_start: isoDate(monthStart), p_end: isoDate(today) }),
+    supabase.rpc("get_center_followup_summary", { p_start: rangeStart, p_end: rangeEnd }),
+    supabase.rpc("get_center_service_summary", { p_start: rangeStart, p_end: rangeEnd }),
+    supabase.rpc("get_center_call_type_summary", { p_start: rangeStart, p_end: rangeEnd }),
+    supabase.rpc("get_daily_trend", { p_start: dailyStart, p_end: dailyEnd }),
+    supabase.rpc("get_daily_call_connection_trend", { p_start: dailyStart, p_end: dailyEnd }),
+    supabase.rpc("get_call_outcome_summary", { p_start: rangeStart, p_end: rangeEnd }),
+  ]);
+
+  if (e0 || e1 || e2 || e3) console.error("Dashboard summary RPCs not found — run dashboard_views_v2.sql / update_service_summary_with_calls.sql", e0 || e1 || e2 || e3);
+  if (e4) console.error("Daily trend RPC not found — run trend_over_time.sql", e4);
+  if (e5) console.error("Daily connection trend RPC not found — run get_daily_call_connection_trend.sql", e5);
+  if (e6) console.error("Call outcome summary RPC not found — run 06_add_call_outcome_and_actions.sql", e6);
+
+  const mtdCount = (mtdSummary || []).reduce((sum, r) => sum + (Number(r.call_count) || 0), 0);
+  document.getElementById("callsMtd").textContent = mtdCount ?? 0;
+
+  lastCenterSummaryRaw = centerSummary || [];
+  lastServiceSummaryRaw = serviceSummary || [];
+  lastCallTypeSummaryRaw = callTypeSummary || [];
+  lastOutcomeSummaryRaw = outcomeSummary || [];
+
+  if (!dashSalonFilterInitialized) {
+    initDashSalonFilter(lastCenterSummaryRaw);
+  }
+
+  renderDailyCallsTable(mergeDailyConnectionData(dailyData || [], dailyConnData || []));
+  renderDashboardFiltered();
+}
+
+function currentDashCenters() {
+  // Which centers to actually render, honoring the salon filter
+  if (!dashSelectedCenters) return { centerSummary: lastCenterSummaryRaw, serviceSummary: lastServiceSummaryRaw, callTypeSummary: lastCallTypeSummaryRaw, outcomeSummary: lastOutcomeSummaryRaw };
+  const set = new Set(dashSelectedCenters);
+  return {
+    centerSummary: lastCenterSummaryRaw.filter(r => set.has(r.center)),
+    serviceSummary: lastServiceSummaryRaw.filter(r => set.has(r.center)),
+    callTypeSummary: lastCallTypeSummaryRaw.filter(r => set.has(r.center)),
+    outcomeSummary: lastOutcomeSummaryRaw.filter(r => set.has(r.center)),
+  };
+}
+
+function renderDashboardFiltered() {
+  const { centerSummary, serviceSummary, callTypeSummary, outcomeSummary } = currentDashCenters();
+
+  // KPI cards derived from the (possibly filtered) summaries — keeps them
+  // consistent with what the charts/tables below are showing.
+  const pendingTotal = centerSummary.reduce((sum, r) => sum + (Number(r.pending_due) || 0), 0);
+  const callsTotal = callTypeSummary.reduce((sum, r) => sum + (Number(r.call_count) || 0), 0);
+  document.getElementById("pendingCount").textContent = pendingTotal;
+  document.getElementById("callsToday").textContent = callsTotal;
+
+  // Booking rate — of the calls actually made, what % resulted in a
+  // booked next appointment (either the standard type or "for other services")
+  const bookedTotal = callTypeSummary
+    .filter(r => (r.call_type || "").toLowerCase().includes("appointment booked"))
+    .reduce((sum, r) => sum + (Number(r.call_count) || 0), 0);
+  const bookingRateEl = document.getElementById("bookingRate");
+  bookingRateEl.textContent = callsTotal > 0 ? `${Math.round((bookedTotal / callsTotal) * 100)}%` : "—";
+
+  renderServiceSummaryTable(serviceSummary);
+  renderCallTypeMatrix(callTypeSummary);
+  renderOutcomeChips(callTypeSummary, callsTotal);
+
+  const outcomeCallsTotal = outcomeSummary.reduce((sum, r) => sum + (Number(r.call_count) || 0), 0);
+  renderCallOutcomeChips(outcomeSummary, outcomeCallsTotal);
+}
+
+function renderCallOutcomeChips(rows, callsTotal, boxId = "callOutcomeChipsBox") {
+  const box = document.getElementById(boxId);
+  if (!rows.length) {
+    box.innerHTML = `<span class="text-gray-400 text-sm">No calls logged yet in this range.</span>`;
+    return;
+  }
+
+  // Aggregate across centers — one total per outcome, same pattern as the
+  // Follow-up Actions chips below.
+  const byOutcome = {};
+  rows.forEach(r => {
+    byOutcome[r.call_outcome] = (byOutcome[r.call_outcome] || 0) + (Number(r.call_count) || 0);
+  });
+  const outcomes = Object.keys(byOutcome).sort((a, b) => byOutcome[b] - byOutcome[a]);
+  const maxCount = Math.max(...outcomes.map(o => byOutcome[o]), 1);
+
+  box.innerHTML = outcomes.map(o => {
+    const count = byOutcome[o];
+    const pct = callsTotal > 0 ? Math.round((count / callsTotal) * 100) : 0;
+    const barPct = Math.round((count / maxCount) * 100);
+    const isConnected = o === "Connected";
+    return `
+      <div class="outcome-chip">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span class="text-sm font-semibold" style="${isConnected ? 'color:#059669' : ''}">${o}</span>
+          <span class="text-sm text-gray-500">${pct}%</span>
+        </div>
+        <div class="text-2xl font-bold" style="margin-top:2px">${count}</div>
+        <div class="outcome-bar-track"><div class="outcome-bar-fill" style="width:${barPct}%${isConnected ? ';background:#059669' : ''}"></div></div>
+      </div>`;
+  }).join("");
+}
+
+function renderOutcomeChips(rows, callsTotal, boxId = "outcomeChipsBox") {
+  const box = document.getElementById(boxId);
+  if (!rows.length) {
+    box.innerHTML = `<span class="text-gray-400 text-sm">No calls logged yet in this range — add some follow-up feedback first.</span>`;
+    return;
+  }
+
+  // Aggregate across centers — one total per call type, regardless of which
+  // center it happened at (the matrix table further down still has the
+  // per-center breakdown for anyone who needs that detail).
+  const byType = {};
+  rows.forEach(r => {
+    byType[r.call_type] = (byType[r.call_type] || 0) + (Number(r.call_count) || 0);
+  });
+  const types = Object.keys(byType).sort((a, b) => byType[b] - byType[a]);
+  const maxCount = Math.max(...types.map(t => byType[t]), 1);
+
+  box.innerHTML = types.map(t => {
+    const count = byType[t];
+    const pct = callsTotal > 0 ? Math.round((count / callsTotal) * 100) : 0;
+    const barPct = Math.round((count / maxCount) * 100);
+    return `
+      <div class="outcome-chip">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span class="text-sm font-semibold">${t}</span>
+          <span class="text-sm text-gray-500">${pct}%</span>
+        </div>
+        <div class="text-2xl font-bold" style="margin-top:2px">${count}</div>
+        <div class="outcome-bar-track"><div class="outcome-bar-fill" style="width:${barPct}%"></div></div>
+      </div>`;
+  }).join("");
+}
+
+async function initDashSalonFilter(centerSummary) {
+  dashSalonFilterInitialized = true;
+  const box = document.getElementById("dashSalonFilterBox");
+  const centers = [...new Set(centerSummary.map(r => r.center))].sort();
+
+  if (!centers.length) {
+    box.innerHTML = `<span class="text-gray-400 text-sm">No centers found.</span>`;
+  } else {
+    box.innerHTML = centers.map(c => `
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;padding:3px 0;cursor:pointer">
+        <input type="checkbox" class="dashSalonCheckbox" value="${c}" checked>
+        ${c}
+      </label>`).join("");
+  }
+
+  document.querySelectorAll(".dashSalonCheckbox").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const checked = [...document.querySelectorAll(".dashSalonCheckbox:checked")].map(c => c.value);
+      const total = document.querySelectorAll(".dashSalonCheckbox").length;
+      dashSelectedCenters = checked.length === total ? null : checked;
+      updateDashSalonFilterLabel(checked.length, total);
+      renderDashboardFiltered();
+    });
+  });
+
+  document.getElementById("dashSalonFilterToggle").addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.getElementById("dashSalonFilterDropdown").classList.toggle("hidden");
+  });
+  document.getElementById("dashSalonFilterDropdown").addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", () => document.getElementById("dashSalonFilterDropdown").classList.add("hidden"));
+
+  document.getElementById("dashSalonSelectAll").addEventListener("click", () => {
+    document.querySelectorAll(".dashSalonCheckbox").forEach(cb => (cb.checked = true));
+    dashSelectedCenters = null;
+    updateDashSalonFilterLabel(centers.length, centers.length);
+    renderDashboardFiltered();
+  });
+  document.getElementById("dashSalonClearAll").addEventListener("click", () => {
+    document.querySelectorAll(".dashSalonCheckbox").forEach(cb => (cb.checked = false));
+    dashSelectedCenters = [];
+    updateDashSalonFilterLabel(0, centers.length);
+    renderDashboardFiltered();
+  });
+}
+
+function updateDashSalonFilterLabel(checkedCount, total) {
+  const label = document.getElementById("dashSalonFilterLabel");
+  label.textContent = checkedCount === total ? "(All)" : `(${checkedCount} selected)`;
+}
+
+function inlineBar(value, max, color) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  return `
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="background:#f1f0f7;border-radius:999px;overflow:hidden;width:90px;height:8px">
+        <div style="background:${color};height:100%;width:${pct}%"></div>
+      </div>
+      <span>${value}</span>
+    </div>`;
+}
+
+// Merge the follow-ups-due trend with the connected-calls trend, keyed
+// by trend_date, so the chart has one row per day with everything it needs.
+function mergeDailyConnectionData(dailyRows, connRows) {
+  const connByDate = {};
+  connRows.forEach(r => { connByDate[r.trend_date] = r; });
+  return dailyRows.map(r => {
+    const c = connByDate[r.trend_date] || {};
+    return {
+      ...r,
+      total_calls: Number(c.total_calls) || 0,
+      connected_calls: Number(c.connected_calls) || 0,
+    };
+  });
+}
+
+let dailyCallsChartInstance = null;
+
+// Single stacked bar per day: Follow-ups Due (orange) + Connected Calls
+// (indigo), stacked in one column — replaces the old two-column table.
+function renderDailyCallsTable(rows) {
+  const canvas = document.getElementById("dailyCallsChart");
+  if (!rows.length) return;
+
+  // Oldest → newest, left to right, like a normal time-series chart.
+  const sorted = [...rows].sort((a, b) => new Date(a.trend_date) - new Date(b.trend_date));
+  const labels = sorted.map(r => r.trend_date.slice(5)); // MM-DD
+  const followupsDue = sorted.map(r => Number(r.followups_due) || 0);
+  const connectedCalls = sorted.map(r => Number(r.connected_calls) || 0);
+
+  if (dailyCallsChartInstance) dailyCallsChartInstance.destroy();
+
+  dailyCallsChartInstance = new Chart(canvas.getContext("2d"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Follow-ups Due",
+          data: followupsDue,
+          backgroundColor: "#f97316",
+          datalabels: {
+            anchor: "center",
+            align: "center",
+            color: "#fff",
+            font: { weight: "700", size: 10 },
+            formatter: v => (v > 0 ? v : ""),
+          },
+        },
+        {
+          label: "Connected Calls",
+          data: connectedCalls,
+          backgroundColor: "#4338ca",
+          datalabels: {
+            anchor: "end",
+            align: "top",
+            color: "#4338ca",
+            font: { weight: "700", size: 10 },
+            formatter: v => (v > 0 ? v : ""),
+          },
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 16 } },
+      scales: {
+        x: { stacked: true, ticks: { autoSkip: false, maxRotation: 60, minRotation: 45 } },
+        y: { stacked: true, beginAtZero: true },
+      },
+      plugins: {
+        legend: { position: "top" },
+      },
+    },
+  });
+}
+
+function renderServiceSummaryTable(rows) {
+  const body = document.getElementById("tblServiceSummaryBody");
+  if (!rows.length) { body.innerHTML = `<tr><td colspan="9" class="p-3 text-center text-gray-400">No follow-up data yet.</td></tr>`; return; }
+
+  // Group rows by center, keeping service rows nested underneath
+  const byCenter = {};
+  rows.forEach(r => {
+    const c = r.center ?? "—";
+    if (!byCenter[c]) byCenter[c] = { pending_due: 0, total_records: 0, calls_today: 0, calls_yesterday: 0, calls_mtd: 0, calls_total: 0, appointment_booked_mtd: 0, services: [] };
+    byCenter[c].pending_due += Number(r.pending_due) || 0;
+    byCenter[c].total_records += Number(r.total_records) || 0;
+    byCenter[c].calls_today += Number(r.calls_today) || 0;
+    byCenter[c].calls_yesterday += Number(r.calls_yesterday) || 0;
+    byCenter[c].calls_mtd += Number(r.calls_mtd) || 0;
+    byCenter[c].calls_total += Number(r.calls_total) || 0;
+    byCenter[c].appointment_booked_mtd += Number(r.appointment_booked_mtd) || 0;
+    byCenter[c].services.push(r);
+  });
+
+  const centers = Object.keys(byCenter).sort((a, b) => byCenter[b].pending_due - byCenter[a].pending_due);
+
+  body.innerHTML = centers.map((c, i) => {
+    const g = byCenter[c];
+    const groupId = `svcGroup${i}`;
+    const serviceRows = g.services
+      .sort((a, b) => (b.pending_due ?? 0) - (a.pending_due ?? 0))
+      .map(s => `
+        <tr class="border-t" data-group="${groupId}" style="display:none;background:#faf9ff">
+          <td class="p-3" style="padding-left:2.5rem;color:#726f92">${s.service_category ?? "—"}</td>
+          <td class="p-3"></td>
+          <td class="p-3">${s.pending_due}</td>
+          <td class="p-3">${s.total_records}</td>
+          <td class="p-3">${s.calls_today ?? 0}</td>
+          <td class="p-3">${s.calls_yesterday ?? 0}</td>
+          <td class="p-3">${s.calls_mtd ?? 0}</td>
+          <td class="p-3">${s.calls_total ?? 0}</td>
+          <td class="p-3">${s.appointment_booked_mtd ?? 0}</td>
+        </tr>`).join("");
+
+    return `
+      <tr class="border-t groupToggleRow" data-group-toggle="${groupId}" style="cursor:pointer">
+        <td class="p-3" style="font-weight:650">
+          <span class="groupArrow" style="display:inline-block;width:14px;transition:transform .15s">▸</span>
+          ${c}
+        </td>
+        <td class="p-3 text-gray-500">${g.services.length} service${g.services.length === 1 ? "" : "s"}</td>
+        <td class="p-3" style="font-weight:650">${g.pending_due}</td>
+        <td class="p-3" style="font-weight:650">${g.total_records}</td>
+        <td class="p-3" style="font-weight:650">${g.calls_today}</td>
+        <td class="p-3" style="font-weight:650">${g.calls_yesterday}</td>
+        <td class="p-3" style="font-weight:650">${g.calls_mtd}</td>
+        <td class="p-3" style="font-weight:650">${g.calls_total}</td>
+        <td class="p-3" style="font-weight:650">${g.appointment_booked_mtd}</td>
+      </tr>
+      ${serviceRows}`;
+  }).join("");
+
+  document.querySelectorAll(".groupToggleRow").forEach(row => {
+    row.addEventListener("click", () => {
+      const groupId = row.dataset.groupToggle;
+      const detailRows = document.querySelectorAll(`tr[data-group="${groupId}"]`);
+      const arrow = row.querySelector(".groupArrow");
+      const isOpen = detailRows[0] && detailRows[0].style.display !== "none";
+      detailRows.forEach(r => { r.style.display = isOpen ? "none" : "table-row"; });
+      arrow.style.transform = isOpen ? "rotate(0deg)" : "rotate(90deg)";
+    });
+  });
+
+  if (!serviceSummaryControlsInitialized) {
+    serviceSummaryControlsInitialized = true;
+    document.getElementById("svcExpandAll").addEventListener("click", () => {
+      document.querySelectorAll('tr[data-group]').forEach(r => (r.style.display = "table-row"));
+      document.querySelectorAll(".groupArrow").forEach(a => (a.style.transform = "rotate(90deg)"));
+    });
+    document.getElementById("svcCollapseAll").addEventListener("click", () => {
+      document.querySelectorAll('tr[data-group]').forEach(r => (r.style.display = "none"));
+      document.querySelectorAll(".groupArrow").forEach(a => (a.style.transform = "rotate(0deg)"));
+    });
+  }
+}
+
+function renderCallTypeMatrix(rows) {
+  const wrap = document.getElementById("tblCallTypeMatrix");
+  if (!rows.length) { wrap.innerHTML = `<p class="text-gray-400 p-3">No call log data yet — add some follow-up feedback first.</p>`; return; }
+
+  const centers = [...new Set(rows.map(r => r.center))].sort();
+  const callTypes = [...new Set(rows.map(r => r.call_type))].sort();
+  const lookup = {};
+  rows.forEach(r => { lookup[`${r.center}||${r.call_type}`] = r.call_count; });
+
+  let html = `<table class="min-w-full text-sm"><thead class="bg-gray-50 text-left text-gray-600"><tr><th class="p-3">Center</th>`;
+  callTypes.forEach(ct => { html += `<th class="p-3">${ct}</th>`; });
+  html += `<th class="p-3">Total</th></tr></thead><tbody>`;
+  centers.forEach(c => {
+    let rowTotal = 0;
+    html += `<tr class="border-t"><td class="p-3 font-semibold">${c}</td>`;
+    callTypes.forEach(ct => {
+      const val = lookup[`${c}||${ct}`] || 0;
+      rowTotal += val;
+      html += `<td class="p-3">${val || "—"}</td>`;
+    });
+    html += `<td class="p-3 font-semibold">${rowTotal}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────
+// FOLLOW-UPS
+// ─────────────────────────────────────────────────────────────
+let callTypes = [];
+let ocCallTypes = [];
+let currentClient = null;
+let followupsInitialized = false;
+let lastClientRows = [];
+let selectedCenters = null;               // null = no filter (show all allowed centers)
+let selectedStatuses = null;              // null = no filter (show all statuses)
+let currentSort = { col: "next_reachout", dir: "asc" };
+let searchTerm = "";
+let remindersMode = false;                // false = normal due-list, true = "Reminders Due" view
+let statusMap = {};                       // guest_code -> latest call_logs status row
+
+// Color coding for call-type outcomes — used for the Status badge
+function getStatusColor(label) {
+  if (!label) return { bg: "#f1f0f7", text: "#726f92" }; // not called yet
+  const l = label.toLowerCase();
+  if (l.includes("appointment booked")) return { bg: "#dcfce7", text: "#166534" };
+  if (l.includes("doesn't want") || l.includes("dont want") || l.includes("don't want")) return { bg: "#fee2e2", text: "#991b1b" };
+  if (l.includes("remind")) return { bg: "#fef3c7", text: "#92400e" };
+  if (l.includes("not connected")) return { bg: "#e5e7eb", text: "#4b5563" };
+  if (l.includes("service issue") || l.includes("employee") || l.includes("value for money")) return { bg: "#ede9fe", text: "#5b21b6" };
+  return { bg: "#dbeafe", text: "#1e40af" }; // "Others" / anything else
+}
+
+function statusBadgeHtml(label, nextBookingDate) {
+  const c = getStatusColor(label);
+  const text = label || "Not Called Yet";
+  let html = `<span style="background:${c.bg};color:${c.text};padding:3px 10px;border-radius:999px;font-size:11px;font-weight:650;white-space:nowrap">${text}</span>`;
+  if (nextBookingDate) {
+    html += `<div style="font-size:11px;color:#726f92;margin-top:4px">📅 ${nextBookingDate}</div>`;
+  }
+  return html;
+}
+
+function computeFollowupDate(label) {
+  if (!label) return null;
+  const today = new Date();
+  const daysMatch = label.match(/(\d+)\s*Days?/i);
+  if (daysMatch) {
+    today.setDate(today.getDate() + parseInt(daysMatch[1], 10));
+    return today.toISOString().slice(0, 10);
+  }
+  if (/next month/i.test(label)) {
+    today.setMonth(today.getMonth() + 1);
+    return today.toISOString().slice(0, 10);
+  }
+  return null; // labels like "Appointment Booked" need a real, manually-picked date
+}
+
+function wireAutoFollowupDate(selectId, dateInputId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.addEventListener("change", () => {
+    const label = sel.options[sel.selectedIndex]?.text ?? "";
+    const computed = computeFollowupDate(label);
+    if (computed) document.getElementById(dateInputId).value = computed;
+  });
+}
+wireAutoFollowupDate("f_call_type_id", "f_next_booking_date");
+wireAutoFollowupDate("oc_call_type_id", "oc_next_booking_date");
+
+async function loadCallTypes() {
+  const { data: actionData } = await supabase.from("call_types").select("*").eq("is_active", true).eq("category", "followup_action").order("sort_order");
+  callTypes = actionData ?? [];
+  ocCallTypes = callTypes; // same shared list, used by both Follow-ups and Other Calls
+  const actionOptionsHtml = `<option value="">Select...</option>` + callTypes.map(t => `<option value="${t.id}">${t.label}</option>`).join("");
+  document.getElementById("f_call_type_id").innerHTML = actionOptionsHtml;
+  const ocSelect = document.getElementById("oc_call_type_id");
+  if (ocSelect) ocSelect.innerHTML = actionOptionsHtml;
+}
+
+// Call Outcome -> Follow-up Action visibility. Follow-up Action (and its
+// "Others" free-text box) only makes sense once the call actually connected;
+// for every other outcome there's nothing to follow up on yet. Next
+// Appointment Date and Remarks are likewise only relevant once connected —
+// hidden and not required for every other outcome.
+document.getElementById("f_call_outcome").addEventListener("change", (e) => {
+  const isConnected = e.target.value === "Connected";
+  const actionWrap = document.getElementById("f_action_wrap");
+  const actionSelect = document.getElementById("f_call_type_id");
+  const othersWrap = document.getElementById("f_others_wrap");
+  const othersInput = document.getElementById("f_others_note");
+  const connectedExtraWrap = document.getElementById("f_connected_extra_wrap");
+  const remarksInput = document.getElementById("f_remarks");
+  const nextBookingInput = document.getElementById("f_next_booking_date");
+
+  actionWrap.classList.toggle("hidden", !isConnected);
+  actionSelect.required = isConnected;
+  connectedExtraWrap.classList.toggle("hidden", !isConnected);
+  remarksInput.required = isConnected;
+  if (!isConnected) {
+    actionSelect.value = "";
+    othersWrap.classList.add("hidden");
+    othersInput.required = false;
+    othersInput.value = "";
+    remarksInput.value = "";
+    nextBookingInput.value = "";
+  }
+});
+
+document.getElementById("f_call_type_id").addEventListener("change", (e) => {
+  const selectedLabel = callTypes.find(t => String(t.id) === e.target.value)?.label || "";
+  const isOthers = selectedLabel === "Others - Specify Reason";
+  const othersWrap = document.getElementById("f_others_wrap");
+  const othersInput = document.getElementById("f_others_note");
+  othersWrap.classList.toggle("hidden", !isOthers);
+  othersInput.required = isOthers;
+  if (!isOthers) othersInput.value = "";
+});
+
+// Same pattern for the Other Calls "Log Call" modal.
+document.getElementById("oc_call_outcome").addEventListener("change", (e) => {
+  const isConnected = e.target.value === "Connected";
+  const actionWrap = document.getElementById("oc_action_wrap");
+  const actionSelect = document.getElementById("oc_call_type_id");
+  const othersWrap = document.getElementById("oc_others_wrap");
+  const othersInput = document.getElementById("oc_others_note");
+  const connectedExtraWrap = document.getElementById("oc_connected_extra_wrap");
+  const remarksInput = document.getElementById("oc_remarks");
+  const nextBookingInput = document.getElementById("oc_next_booking_date");
+
+  actionWrap.classList.toggle("hidden", !isConnected);
+  actionSelect.required = isConnected;
+  connectedExtraWrap.classList.toggle("hidden", !isConnected);
+  remarksInput.required = isConnected;
+  if (!isConnected) {
+    actionSelect.value = "";
+    othersWrap.classList.add("hidden");
+    othersInput.required = false;
+    othersInput.value = "";
+    remarksInput.value = "";
+    nextBookingInput.value = "";
+  }
+});
+
+document.getElementById("oc_call_type_id").addEventListener("change", (e) => {
+  const selectedLabel = ocCallTypes.find(t => String(t.id) === e.target.value)?.label || "";
+  const isOthers = selectedLabel === "Others - Specify Reason";
+  const othersWrap = document.getElementById("oc_others_wrap");
+  const othersInput = document.getElementById("oc_others_note");
+  othersWrap.classList.toggle("hidden", !isOthers);
+  othersInput.required = isOthers;
+  if (!isOthers) othersInput.value = "";
+});
+
+async function loadCenterFilterCheckboxes() {
+  const box = document.getElementById("centerFilterBox");
+  const { data, error } = await supabase.from("v_active_centers").select("center");
+  if (error || !data || data.length === 0) {
+    box.innerHTML = `<span class="text-gray-400 text-sm">No centers found.</span>`;
+    return;
+  }
+  box.innerHTML = data.map(r => `
+    <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="centerCheckbox" value="${r.center}" checked>
+      ${r.center}
+    </label>`).join("");
+
+  document.querySelectorAll(".centerCheckbox").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const checked = [...document.querySelectorAll(".centerCheckbox:checked")].map(c => c.value);
+      const total = document.querySelectorAll(".centerCheckbox").length;
+      selectedCenters = checked.length === total ? null : checked; // null = no filter needed
+      loadClients();
+    });
+  });
+}
+
+function loadStatusFilterCheckboxes() {
+  const box = document.getElementById("statusFilterBox");
+  const options = ["Not Called Yet", ...callTypes.map(t => t.label)];
+  box.innerHTML = options.map(label => `
+    <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="statusCheckbox" value="${label}" checked>
+      ${label}
+    </label>`).join("");
+
+  document.querySelectorAll(".statusCheckbox").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const checked = [...document.querySelectorAll(".statusCheckbox:checked")].map(c => c.value);
+      const total = document.querySelectorAll(".statusCheckbox").length;
+      selectedStatuses = checked.length === total ? null : checked;
+      renderClientsTable();
+    });
+  });
+}
+
+function updateSortArrows() {
+  document.querySelectorAll(".sortableCol").forEach(th => {
+    const arrow = th.querySelector(".sortArrow");
+    if (th.dataset.col === currentSort.col) {
+      arrow.textContent = currentSort.dir === "asc" ? "▲" : "▼";
+    } else {
+      arrow.textContent = "";
+    }
+  });
+}
+
+async function loadClients(search) {
+  if (search !== undefined) searchTerm = search;
+
+  if (remindersMode) {
+    // Reminders Due: pull directly from call_logs — guests whose most recent
+    // logged outcome was "Remind Me Later" and the reminder date falls in
+    // the selected range. Uses call_logs' own snapshotted guest fields.
+    let query = supabase.from("call_logs")
+      .select("*, call_types!inner(label)")
+      .gte("next_booking_date", rangeStart)
+      .lte("next_booking_date", rangeEnd)
+      .order("next_booking_date", { ascending: true })
+      .limit(200);
+    if (searchTerm) {
+      query = query.or(`guest_name.ilike.%${searchTerm}%,mobile_number.ilike.%${searchTerm}%,guest_code.ilike.%${searchTerm}%`);
+    }
+    const { data, error } = await query;
+    const body = document.getElementById("clientsBody");
+    if (error) {
+      body.innerHTML = `<tr><td colspan="13" class="p-6 text-center text-red-500">Error loading reminders: ${error.message}</td></tr>`;
+      return;
+    }
+    // Keep only each guest's MOST RECENT reminder (in case of duplicates)
+    const latestByGuest = {};
+    (data ?? []).forEach(r => {
+      if (!latestByGuest[r.guest_code] || new Date(r.created_at) > new Date(latestByGuest[r.guest_code].created_at)) {
+        latestByGuest[r.guest_code] = r;
+      }
+    });
+    const reminderRows = Object.values(latestByGuest);
+
+    // call_logs never snapshots Brand / Category / Last Employee / Last
+    // Served — those live on the guest's current record, not the call
+    // log. Look them up in one batched query by guest_code, so the
+    // Reminders Due table doesn't show blank "—" for these columns.
+    const guestCodes = [...new Set(reminderRows.map(r => r.guest_code).filter(Boolean))];
+    let sourceByGuestCode = {};
+    if (guestCodes.length) {
+      const { data: sourceRows, error: sourceError } = await supabase
+        .from("client_followup_source")
+        .select("guest_code, brand, father, last_employee_served, date_last_served")
+        .in("guest_code", guestCodes);
+      if (sourceError) console.error("Reminders Due enrichment lookup failed:", sourceError.message);
+      (sourceRows ?? []).forEach(s => { sourceByGuestCode[s.guest_code] = s; });
+    }
+
+    lastClientRows = reminderRows.map(r => {
+      const src = sourceByGuestCode[r.guest_code];
+      return {
+        guest_name: r.guest_name, guest_code: r.guest_code, mobile_number: r.mobile_number,
+        brand: src?.brand ?? null, center: r.center_name, service_name: r.service_name,
+        father: src?.father ?? null,
+        last_employee_served: src?.last_employee_served ?? null, date_last_served: src?.date_last_served ?? null,
+        next_reachout: r.next_booking_date, atv_segment: null, total_atv: null,
+        _statusLabel: r.call_types?.label || r.call_outcome, _statusDate: r.next_booking_date,
+      };
+    });
+    statusMap = {}; // status is already embedded per-row above
+    renderClientsTable();
+    return;
+  }
+
+  let query = supabase.from("client_followup_source").select("*")
+    .gte("next_reachout", rangeStart)
+    .lte("next_reachout", rangeEnd)
+    .order(currentSort.col, { ascending: currentSort.dir === "asc" })
+    .limit(200);
+
+  if (selectedCenters) {
+    query = query.in("center", selectedCenters.length ? selectedCenters : ["__none__"]);
+  }
+  if (searchTerm) {
+    query = query.or(`guest_name.ilike.%${searchTerm}%,mobile_number.ilike.%${searchTerm}%,guest_code.ilike.%${searchTerm}%`);
+  }
+
+  const { data, error } = await query;
+  updateSortArrows();
+  const body = document.getElementById("clientsBody");
+  if (error) {
+    body.innerHTML = `<tr><td colspan="13" class="p-6 text-center text-red-500">Error loading clients: ${error.message}</td></tr>`;
+    return;
+  }
+  lastClientRows = data ?? [];
+
+  // Join in each guest's latest call status (if any), so agents can see at
+  // a glance who's already been called and how they responded.
+  statusMap = {};
+  if (lastClientRows.length) {
+    const codes = lastClientRows.map(c => c.guest_code);
+    const { data: statusRows } = await supabase.from("v_latest_call_per_guest").select("*").in("guest_code", codes);
+    (statusRows ?? []).forEach(s => { statusMap[s.guest_code] = s; });
+  }
+
+  renderClientsTable();
+}
+
+function renderClientsTable() {
+  const body = document.getElementById("clientsBody");
+  if (!lastClientRows.length) {
+    body.innerHTML = `<tr><td colspan="13" class="p-6 text-center text-gray-400">${remindersMode ? "No reminders due in this range." : "No clients due for follow-up."}</td></tr>`;
+    return;
+  }
+
+  // Apply status filter (client-side, over the already-fetched rows)
+  let rows = lastClientRows;
+  if (selectedStatuses) {
+    rows = rows.filter((c, i) => {
+      const label = remindersMode ? c._statusLabel : (statusMap[c.guest_code]?.call_type_label || statusMap[c.guest_code]?.call_outcome);
+      return selectedStatuses.includes(label || "Not Called Yet");
+    });
+  }
+
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="13" class="p-6 text-center text-gray-400">No clients match the current filters.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = rows.map((c) => {
+    const idx = lastClientRows.indexOf(c);
+    const statusLabel = remindersMode ? c._statusLabel : (statusMap[c.guest_code]?.call_type_label || statusMap[c.guest_code]?.call_outcome);
+    const statusDate = remindersMode ? null : statusMap[c.guest_code]?.next_booking_date; // already shown as next_reachout in reminders mode
+    return `
+    <tr class="border-t">
+      <td class="p-3"><button data-idx="${idx}" class="followUpBtn bg-orange-500 text-white text-xs px-3 py-1 rounded">Add Follow Up</button></td>
+      <td class="p-3">${statusBadgeHtml(statusLabel, statusDate)}</td>
+      <td class="p-3">${c.guest_name ?? ""}</td>
+      <td class="p-3">${c.guest_code ?? ""}</td>
+      <td class="p-3">${c.mobile_number ?? ""}</td>
+      <td class="p-3">${c.brand ?? "—"}</td>
+      <td class="p-3">${c.center ?? ""}</td>
+      <td class="p-3">${c.father ?? c.category ?? "—"}</td>
+      <td class="p-3">${c.service_name ?? ""}</td>
+      <td class="p-3">${c.last_employee_served ?? "—"}</td>
+      <td class="p-3">${c.date_last_served ?? "—"}</td>
+      <td class="p-3">${c.next_reachout ?? ""}</td>
+    </tr>`;
+  }).join("");
+
+  document.querySelectorAll(".followUpBtn").forEach(btn => {
+    btn.addEventListener("click", () => openFeedback(lastClientRows[btn.dataset.idx]));
+  });
+}
+
+function openFeedback(client) {
+  currentClient = client;
+  document.getElementById("modalError").classList.add("hidden");
+  document.getElementById("feedbackForm").reset();
+  document.getElementById("f_action_wrap").classList.add("hidden");
+  document.getElementById("f_others_wrap").classList.add("hidden");
+  document.getElementById("f_call_type_id").required = false;
+  document.getElementById("f_others_note").required = false;
+  document.getElementById("f_connected_extra_wrap").classList.add("hidden");
+  document.getElementById("f_remarks").required = false;
+  document.getElementById("f_called_by_name").value = localStorage.getItem("jcb_last_called_by_name") || "";
+  document.getElementById("feedbackModal").classList.remove("hidden");
+}
+
+async function loadFollowupsPage() {
+  await loadCallTypes();
+  if (!followupsInitialized) {
+    await loadCenterFilterCheckboxes();
+    loadStatusFilterCheckboxes();
+  }
+  await loadClients();
+
+  if (!followupsInitialized) {
+    followupsInitialized = true;
+
+    document.querySelectorAll(".sortableCol").forEach(th => {
+      th.addEventListener("click", (e) => {
+        if (e.target.closest("#centerFilterToggle") || e.target.closest("#centerFilterDropdown")
+          || e.target.closest("#statusFilterToggle") || e.target.closest("#statusFilterDropdown")) return;
+        const col = th.dataset.col;
+        if (col === "status") return; // status isn't a sortable server-side column
+        if (currentSort.col === col) {
+          currentSort.dir = currentSort.dir === "asc" ? "desc" : "asc";
+        } else {
+          currentSort = { col, dir: "asc" };
+        }
+        loadClients();
+      });
+    });
+
+    document.getElementById("centerFilterToggle").addEventListener("click", (e) => {
+      e.stopPropagation();
+      document.getElementById("centerFilterDropdown").classList.toggle("hidden");
+    });
+    document.getElementById("centerFilterDropdown").addEventListener("click", (e) => e.stopPropagation());
+    document.getElementById("statusFilterToggle").addEventListener("click", (e) => {
+      e.stopPropagation();
+      document.getElementById("statusFilterDropdown").classList.toggle("hidden");
+    });
+    document.getElementById("statusFilterDropdown").addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", () => {
+      document.getElementById("centerFilterDropdown").classList.add("hidden");
+      document.getElementById("statusFilterDropdown").classList.add("hidden");
+    });
+
+    document.getElementById("centerSelectAll").addEventListener("click", () => {
+      document.querySelectorAll(".centerCheckbox").forEach(cb => (cb.checked = true));
+      selectedCenters = null;
+      loadClients();
+    });
+    document.getElementById("centerClearAll").addEventListener("click", () => {
+      document.querySelectorAll(".centerCheckbox").forEach(cb => (cb.checked = false));
+      selectedCenters = [];
+      loadClients();
+    });
+
+    document.getElementById("statusSelectAll").addEventListener("click", () => {
+      document.querySelectorAll(".statusCheckbox").forEach(cb => (cb.checked = true));
+      selectedStatuses = null;
+      renderClientsTable();
+    });
+    document.getElementById("statusClearAll").addEventListener("click", () => {
+      document.querySelectorAll(".statusCheckbox").forEach(cb => (cb.checked = false));
+      selectedStatuses = [];
+      renderClientsTable();
+    });
+
+    document.getElementById("remindersToggleBtn").addEventListener("click", () => {
+      remindersMode = !remindersMode;
+      const btn = document.getElementById("remindersToggleBtn");
+      btn.classList.toggle("activePreset", remindersMode);
+      loadClients();
+    });
+
+    document.getElementById("closeModalBtn").addEventListener("click", () => {
+      document.getElementById("feedbackModal").classList.add("hidden");
+    });
+
+    document.getElementById("feedbackForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const callOutcome = document.getElementById("f_call_outcome").value;
+      if (!callOutcome) return;
+
+      const isConnected = callOutcome === "Connected";
+      const callTypeIdRaw = document.getElementById("f_call_type_id").value;
+      if (isConnected && !callTypeIdRaw) return; // Follow-up Action required once connected
+
+      const selectedActionLabel = callTypes.find(t => String(t.id) === callTypeIdRaw)?.label || "";
+      const othersNote = document.getElementById("f_others_note").value.trim();
+      if (isConnected && selectedActionLabel === "Others - Specify Reason" && !othersNote) return; // "Others" needs the reason
+
+      let remarks = document.getElementById("f_remarks").value.trim();
+      if (isConnected && remarks.length < 2) return;
+      if (isConnected && selectedActionLabel === "Others - Specify Reason" && othersNote) {
+        remarks = `[Others: ${othersNote}] ${remarks}`;
+      }
+
+      const calledByName = document.getElementById("f_called_by_name").value.trim();
+      if (calledByName.length < 2) return;
+      localStorage.setItem("jcb_last_called_by_name", calledByName);
+
+      const { error } = await supabase.from("call_logs").insert({
+        guest_code: currentClient.guest_code,
+        guest_name: currentClient.guest_name,
+        mobile_number: currentClient.mobile_number,
+        center_name: currentClient.center,
+        service_name: currentClient.service_name,
+        call_outcome: callOutcome,
+        call_type_id: isConnected ? Number(callTypeIdRaw) : null,
+        remarks,
+        next_booking_date: document.getElementById("f_next_booking_date").value || null,
+        called_by: session.user.id,
+        called_by_name: calledByName,
+      });
+
+      if (error) {
+        const box = document.getElementById("modalError");
+        box.textContent = "Could not save follow-up: " + error.message;
+        box.classList.remove("hidden");
+        return;
+      }
+
+      document.getElementById("feedbackModal").classList.add("hidden");
+      const success = document.getElementById("fuSuccessBox");
+      success.textContent = "Follow-up saved.";
+      success.classList.remove("hidden");
+      setTimeout(() => success.classList.add("hidden"), 3000);
+
+      // Refresh so the Status badge / Reminders view reflect the new call immediately
+      loadClients();
+    });
+
+    document.getElementById("searchBtn").addEventListener("click", () => {
+      loadClients(document.getElementById("searchInput").value.trim());
+    });
+    document.getElementById("searchInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); document.getElementById("searchBtn").click(); }
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// ADMIN: USERS  (public.profiles — shared with your other product)
+// ─────────────────────────────────────────────────────────────
+let usersInitialized = false;
+
+function showUsersMsg(text, isError = false) {
+  const box = document.getElementById("usersMsgBox");
+  box.textContent = text;
+  box.className = `mb-4 px-4 py-2 rounded ${isError ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`;
+  box.classList.remove("hidden");
+  setTimeout(() => box.classList.add("hidden"), 4000);
+}
+
+async function loadUsers() {
+  const { data, error } = await supabase.from("profiles").select("*").order("full_name");
+  const body = document.getElementById("usersBody");
+  if (error) {
+    body.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-red-500">${error.message}</td></tr>`;
+    return;
+  }
+  usersCache = data;
+  body.innerHTML = data.map(p => `
+    <tr class="border-t">
+      <td class="p-3">${p.full_name ?? ""}</td>
+      <td class="p-3">${p.email ?? ""}</td>
+      <td class="p-3">${p.role}</td>
+      <td class="p-3">${p.hierarchy_role ?? ""}</td>
+      <td class="p-3">${p.access_salons ?? ""}</td>
+      <td class="p-3">${p.active ? "Active" : "Disabled"}</td>
+      <td class="p-3">
+        <button data-id="${p.id}" data-can-upload="${p.can_upload_other_calls === true}" class="uploadToggleBtn text-xs px-3 py-1 rounded ${p.can_upload_other_calls ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}">
+          ${p.can_upload_other_calls ? "Yes — Revoke" : "No — Grant"}
+        </button>
+      </td>
+      <td class="p-3">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button data-id="${p.id}" class="editBtn text-xs px-3 py-1 rounded bg-sky-100 text-sky-700">Edit</button>
+          <button data-id="${p.id}" class="resetPwBtn text-xs px-3 py-1 rounded bg-orange-100 text-orange-700">Reset Password</button>
+          <button data-id="${p.id}" data-active="${p.active}" class="toggleBtn text-xs px-3 py-1 rounded ${p.active ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}">
+            ${p.active ? "Disable" : "Enable"}
+          </button>
+        </div>
+      </td>
+    </tr>`).join("");
+
+  document.querySelectorAll(".toggleBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const isActive = btn.dataset.active === "true";
+      const { error } = await supabase.from("profiles").update({ active: !isActive }).eq("id", btn.dataset.id);
+      if (error) { showUsersMsg(error.message, true); return; }
+      showUsersMsg("User updated.");
+      loadUsers();
+    });
+  });
+
+  document.querySelectorAll(".uploadToggleBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const canUpload = btn.dataset.canUpload === "true";
+      const { error } = await supabase.from("profiles").update({ can_upload_other_calls: !canUpload }).eq("id", btn.dataset.id);
+      if (error) { showUsersMsg(error.message, true); return; }
+      showUsersMsg("User updated.");
+      loadUsers();
+    });
+  });
+
+  document.querySelectorAll(".editBtn").forEach(btn => {
+    btn.addEventListener("click", () => openEditUser(btn.dataset.id));
+  });
+
+  document.querySelectorAll(".resetPwBtn").forEach(btn => {
+    btn.addEventListener("click", () => openResetPassword(btn.dataset.id));
+  });
+}
+
+let usersCache = [];
+let editingUserId = null;
+let resetPwUserId = null;
+
+function openEditUser(userId) {
+  const p = usersCache.find(u => u.id === userId);
+  if (!p) return;
+  editingUserId = userId;
+  document.getElementById("editUserError").classList.add("hidden");
+  document.getElementById("e_full_name").value = p.full_name ?? "";
+  document.getElementById("e_email").value = p.email ?? "";
+  document.getElementById("e_role").value = p.role;
+  document.getElementById("e_hierarchy_role").value = p.hierarchy_role ?? "";
+  document.getElementById("e_access_salons").value = p.access_salons ?? "";
+  document.getElementById("e_can_upload").checked = p.can_upload_other_calls === true;
+  document.getElementById("editUserModal").classList.remove("hidden");
+}
+
+function openResetPassword(userId) {
+  const p = usersCache.find(u => u.id === userId);
+  if (!p) return;
+  resetPwUserId = userId;
+  document.getElementById("resetPwError").classList.add("hidden");
+  document.getElementById("resetPwFor").textContent = `Setting a new password for: ${p.full_name} (${p.email})`;
+  document.getElementById("rp_password").value = "admin@123";
+  document.getElementById("resetPwModal").classList.remove("hidden");
+}
+
+
+async function loadUsersPage() {
+  await loadUsers();
+  if (!usersInitialized) {
+    usersInitialized = true;
+    document.getElementById("createUserForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = {
+        full_name: document.getElementById("u_full_name").value,
+        email: document.getElementById("u_email").value,
+        password: document.getElementById("u_password").value,
+        role: document.getElementById("u_role").value,
+        hierarchy_role: document.getElementById("u_hierarchy_role").value || null,
+        access_salons: document.getElementById("u_access_salons").value || null,
+      };
+      try {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/admin-create-user`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "apikey": SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify(payload),
+        });
+        const result = await resp.json();
+        if (!resp.ok) { showUsersMsg(result.error || "Could not create user", true); return; }
+        showUsersMsg("User created.");
+        document.getElementById("createUserForm").reset();
+        loadUsers();
+      } catch (err) {
+        showUsersMsg("Request failed: " + err.message + " — is the admin-create-user function deployed?", true);
+      }
+    });
+
+    document.getElementById("closeEditUserBtn").addEventListener("click", () => {
+      document.getElementById("editUserModal").classList.add("hidden");
+    });
+
+    document.getElementById("editUserForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const { error } = await supabase.from("profiles").update({
+        full_name: document.getElementById("e_full_name").value,
+        role: document.getElementById("e_role").value,
+        hierarchy_role: document.getElementById("e_hierarchy_role").value || null,
+        access_salons: document.getElementById("e_access_salons").value || null,
+        can_upload_other_calls: document.getElementById("e_can_upload").checked,
+      }).eq("id", editingUserId);
+
+      if (error) {
+        const box = document.getElementById("editUserError");
+        box.textContent = error.message;
+        box.classList.remove("hidden");
+        return;
+      }
+      document.getElementById("editUserModal").classList.add("hidden");
+      showUsersMsg("User updated.");
+      loadUsers();
+    });
+
+    document.getElementById("closeResetPwBtn").addEventListener("click", () => {
+      document.getElementById("resetPwModal").classList.add("hidden");
+    });
+
+    document.getElementById("resetPwForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/admin-reset-password`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "apikey": SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            target_user_id: resetPwUserId,
+            new_password: document.getElementById("rp_password").value,
+          }),
+        });
+        const result = await resp.json();
+        if (!resp.ok) {
+          const box = document.getElementById("resetPwError");
+          box.textContent = (result.error || "Could not reset password") + (result.debug ? ` — ${result.debug}` : "");
+          box.classList.remove("hidden");
+          return;
+        }
+        await supabase.from("profiles").update({ must_change_password: true }).eq("id", resetPwUserId);
+        document.getElementById("resetPwModal").classList.add("hidden");
+        showUsersMsg("Password reset.");
+      } catch (err) {
+        const box = document.getElementById("resetPwError");
+        box.textContent = "Request failed: " + err.message + " — is the admin-reset-password function deployed?";
+        box.classList.remove("hidden");
+      }
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// ADMIN: CALL TYPES
+// ─────────────────────────────────────────────────────────────
+let callTypesInitialized = false;
+
+function showTypesMsg(text, isError = false) {
+  const box = document.getElementById("typesMsgBox");
+  box.textContent = text;
+  box.className = `mb-4 px-4 py-2 rounded ${isError ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`;
+  box.classList.remove("hidden");
+  setTimeout(() => box.classList.add("hidden"), 4000);
+}
+
+async function loadTypesList() {
+  const { data, error } = await supabase.from("call_types").select("*").order("sort_order");
+  const list = document.getElementById("typesList");
+  if (error) { list.innerHTML = `<li class="p-3 text-red-500">${error.message}</li>`; return; }
+  list.innerHTML = data.map(t => `
+    <li class="p-3 border-t flex justify-between">
+      <span>${t.label}</span>
+      <span class="text-gray-400 text-sm">${t.is_active ? "active" : "hidden"}</span>
+    </li>`).join("");
+  document.getElementById("t_sort_order").value = data.length + 1;
+}
+
+async function loadCallTypesPage() {
+  await loadTypesList();
+  if (!callTypesInitialized) {
+    callTypesInitialized = true;
+    document.getElementById("addTypeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const { error } = await supabase.from("call_types").insert({
+        label: document.getElementById("t_label").value,
+        sort_order: Number(document.getElementById("t_sort_order").value),
+      });
+      if (error) { showTypesMsg(error.message, true); return; }
+      showTypesMsg("Call type added.");
+      document.getElementById("addTypeForm").reset();
+      loadTypesList();
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// CALL LOGS REPORT — full history of other_call_logs, independent
+// of whether the source lead row (other_calls_source) still exists.
+// Lets staff look up a client by mobile/name and see what was said
+// in a previous month, even after a Wipe-and-upload cycle.
+// ─────────────────────────────────────────────────────────────
+let clLogsInitialized = false;
+let clAllLogsForSummary = [];
+
+function clMonthLabel(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+}
+function clMonthKey(iso) {
+  const d = new Date(iso);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// SCRIPT BOOK — static reference content, nothing to load.
+// ─────────────────────────────────────────────────────────────
+async function loadScriptsPage() {}
+
+async function loadCallLogsPage() {
+  if (!clLogsInitialized) {
+    clLogsInitialized = true;
+    document.getElementById("clFilterBtn").addEventListener("click", refreshCallLogsDetail);
+    document.getElementById("clSourceFilter").addEventListener("change", async () => {
+      await loadCallLogsSummaryAndFilters();
+      await refreshCallLogsDetail();
+    });
+    document.getElementById("clSearchInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") refreshCallLogsDetail();
+    });
+  }
+  await loadCallLogsSummaryAndFilters();
+  await refreshCallLogsDetail();
+}
+
+// Pulls a lightweight slice across both call_logs (Follow-ups) and
+// other_call_logs (Other Calls) to build the month/type filter options
+// and the summary matrix. Follow-up rows are tagged with the fixed
+// type label "Follow-up" (they don't have a calls_type of their own),
+// so the same Month x Type matrix works for both sources combined.
+async function loadCallLogsSummaryAndFilters() {
+  const source = document.getElementById("clSourceFilter").value;
+  const wrap = document.getElementById("clSummaryWrap");
+
+  const fetches = [];
+  if (source === "all" || source === "followups") {
+    fetches.push(
+      supabase.from("call_logs").select("created_at").order("created_at", { ascending: false }).limit(20000)
+        .then(({ data, error }) => { if (error) throw error; return (data ?? []).map(r => ({ created_at: r.created_at, calls_type: "Follow-up" })); })
+    );
+  }
+  if (source === "all" || source === "other_calls") {
+    fetches.push(
+      supabase.from("other_call_logs").select("created_at, calls_type").order("created_at", { ascending: false }).limit(20000)
+        .then(({ data, error }) => { if (error) throw error; return data ?? []; })
+    );
+  }
+
+  let combined;
+  try {
+    combined = (await Promise.all(fetches)).flat();
+  } catch (error) {
+    wrap.innerHTML = `<p class="text-red-500 text-sm">${error.message}</p>`;
+    return;
+  }
+  clAllLogsForSummary = combined;
+
+  // Build filter dropdown options
+  const months = [...new Set(clAllLogsForSummary.map(r => clMonthKey(r.created_at)))].sort().reverse();
+  const types = [...new Set(clAllLogsForSummary.map(r => r.calls_type).filter(Boolean))].sort();
+
+  const monthSel = document.getElementById("clMonthFilter");
+  const prevMonth = monthSel.value;
+  monthSel.innerHTML = `<option value="">All Months</option>` +
+    months.map(m => `<option value="${m}">${clMonthLabel(m + "-01")}</option>`).join("");
+  if (months.includes(prevMonth)) monthSel.value = prevMonth;
+
+  const typeSel = document.getElementById("clTypeFilter");
+  const prevType = typeSel.value;
+  typeSel.innerHTML = `<option value="">All Types</option>` +
+    types.map(t => `<option value="${t}">${t}</option>`).join("");
+  if (types.includes(prevType)) typeSel.value = prevType;
+
+  // Build month x calls_type summary matrix
+  if (!clAllLogsForSummary.length) {
+    wrap.innerHTML = `<p class="text-gray-400 text-sm">No calls logged yet.</p>`;
+    return;
+  }
+  const counts = {}; // month -> type -> count
+  months.forEach(m => { counts[m] = {}; types.forEach(t => counts[m][t] = 0); });
+  clAllLogsForSummary.forEach(r => {
+    const m = clMonthKey(r.created_at);
+    const t = r.calls_type || "—";
+    if (!counts[m]) counts[m] = {};
+    counts[m][t] = (counts[m][t] || 0) + 1;
+  });
+
+  const typeTotal = {}; types.forEach(t => typeTotal[t] = 0);
+  let grandTotal = 0;
+  const rowsHtml = months.map(m => {
+    let rowTotal = 0;
+    const cells = types.map(t => {
+      const c = counts[m][t] || 0;
+      rowTotal += c; typeTotal[t] += c;
+      return `<td class="p-2 text-center">${c || "–"}</td>`;
+    }).join("");
+    grandTotal += rowTotal;
+    return `<tr class="border-t"><td class="p-2 font-medium">${clMonthLabel(m + "-01")}</td>${cells}<td class="p-2 text-center font-semibold">${rowTotal}</td></tr>`;
+  }).join("");
+
+  wrap.innerHTML = `
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-50 text-left text-gray-600">
+        <tr><th class="p-2">Month</th>${types.map(t => `<th class="p-2 text-center">${t}</th>`).join("")}<th class="p-2 text-center">Total</th></tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+        <tr class="border-t bg-gray-50 font-semibold">
+          <td class="p-2">Total</td>${types.map(t => `<td class="p-2 text-center">${typeTotal[t]}</td>`).join("")}<td class="p-2 text-center">${grandTotal}</td>
+        </tr>
+      </tbody>
+    </table>`;
+}
+
+// Pulls the full detail rows matching the current filters, from
+// whichever source(s) are selected, normalized into one common shape.
+async function refreshCallLogsDetail() {
+  const body = document.getElementById("clLogsBody");
+  body.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-gray-400">Loading…</td></tr>`;
+
+  const source = document.getElementById("clSourceFilter").value;
+  const month = document.getElementById("clMonthFilter").value;
+  const type = document.getElementById("clTypeFilter").value;
+  const search = document.getElementById("clSearchInput").value.trim();
+  const esc = search.replace(/[%,]/g, "");
+
+  let start = null, end = null;
+  if (month) {
+    const [y, m] = month.split("-").map(Number);
+    start = `${month}-01`;
+    end = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
+  }
+
+  const queries = [];
+
+  if ((source === "all" || source === "followups") && (!type || type === "Follow-up")) {
+    let q = supabase.from("call_logs").select("*, call_types(label)").order("created_at", { ascending: false }).limit(1000);
+    if (start) q = q.gte("created_at", start).lt("created_at", end);
+    if (esc) q = q.or(`guest_name.ilike.%${esc}%,mobile_number.ilike.%${esc}%`);
+    queries.push(q.then(({ data, error }) => {
+      if (error) throw error;
+      return (data ?? []).map(r => ({
+        created_at: r.created_at, source: "Follow-up",
+        guest_name: r.guest_name, mobile_number: r.mobile_number, center_name: r.center_name,
+        calls_type: r.service_name, call_outcome: r.call_outcome,
+        action_label: r.call_types?.label, remarks: r.remarks,
+        next_booking_date: r.next_booking_date, called_by_name: r.called_by_name,
+      }));
+    }));
+  }
+
+  if ((source === "all" || source === "other_calls") && (!type || type !== "Follow-up")) {
+    let q = supabase.from("other_call_logs").select("*, call_types(label)").order("created_at", { ascending: false }).limit(1000);
+    if (type) q = q.eq("calls_type", type);
+    if (start) q = q.gte("created_at", start).lt("created_at", end);
+    if (esc) q = q.or(`guest_name.ilike.%${esc}%,mobile_number.ilike.%${esc}%`);
+    queries.push(q.then(({ data, error }) => {
+      if (error) throw error;
+      return (data ?? []).map(r => ({
+        created_at: r.created_at, source: "Other Call",
+        guest_name: r.guest_name, mobile_number: r.mobile_number, center_name: r.center_name,
+        calls_type: r.calls_type, call_outcome: r.call_outcome,
+        action_label: r.call_types?.label, remarks: r.remarks,
+        next_booking_date: r.next_booking_date, called_by_name: r.called_by_name,
+      }));
+    }));
+  }
+
+  let rows;
+  try {
+    rows = (await Promise.all(queries)).flat();
+  } catch (error) {
+    body.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-red-500">${error.message}</td></tr>`;
+    return;
+  }
+  rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  rows = rows.slice(0, 1000);
+
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-gray-400">No calls found for these filters.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = rows.map(r => `
+    <tr class="border-t">
+      <td class="p-3">${new Date(r.created_at).toLocaleString()}</td>
+      <td class="p-3">${r.source}</td>
+      <td class="p-3">${r.guest_name ?? "—"}</td>
+      <td class="p-3">${r.mobile_number ?? "—"}</td>
+      <td class="p-3">${r.center_name ?? "—"}</td>
+      <td class="p-3">${r.calls_type ?? "—"}</td>
+      <td class="p-3">${r.call_outcome ?? "—"}</td>
+      <td class="p-3">${r.action_label ?? "—"}</td>
+      <td class="p-3">${r.remarks ?? "—"}</td>
+      <td class="p-3">${r.next_booking_date ?? "—"}</td>
+      <td class="p-3">${r.called_by_name ?? "—"}</td>
+    </tr>`).join("");
+}
+let ocLeadRows = [];
+let ocStatusMap = {};           // source_id -> latest other_call_logs row
+let ocSelectedTypes = null;     // null = no filter (show all calls types)
+let ocSelectedCenters = null;   // null = no filter (show all centers)
+let ocSearchTerm = "";
+let ocTypeFilterInitialized = false;
+let ocCenterFilterInitialized = false;
+let ocRemindersMode = false;    // false = normal leads list, true = "Reminders Due" view
+let ocCurrentSort = { col: "created_at", dir: "desc" };
+let currentOcLead = null;
+let otherCallsChartInstance = null;
+
+async function loadOtherCallsPage() {
+  await loadCallTypes(); // also populates oc_call_type_id (see loadCallTypes)
+  await loadOcTypeFilterCheckboxes();
+  if (!ocCenterFilterInitialized) {
+    await loadOcCenterFilterCheckboxes();
+  }
+  await refreshOtherCallsPage();
+}
+
+// Re-fetches both the leads list and the KPI/chart stats, keeping them
+// in sync with the Calls Type filter, search term, and date range.
+async function refreshOtherCallsPage() {
+  await Promise.all([loadOcLeads(), loadOcDashboardStats()]);
+}
+
+// Upload page is a separate, permission-gated page — nothing to load,
+// the form posts directly.
+async function loadOtherCallsUploadPage() {
+  const wrap = document.getElementById("ocUploadModeWrap");
+  const canWipe = profile?.role === "admin" || profile?.can_upload_other_calls === true;
+  if (wrap) wrap.classList.toggle("hidden", !canWipe);
+}
+
+async function loadOcLeads() {
+  if (ocRemindersMode) {
+    // Reminders Due: pull directly from other_call_logs — leads whose most
+    // recent logged outcome was "Remind Me Later" and the reminder date
+    // falls in the selected range.
+    let query = supabase.from("other_call_logs")
+      .select("*, call_types!inner(label)")
+      .gte("next_booking_date", rangeStart)
+      .lte("next_booking_date", rangeEnd)
+      .order("next_booking_date", { ascending: true })
+      .limit(200);
+    if (ocSelectedTypes) {
+      query = query.in("calls_type", ocSelectedTypes.length ? ocSelectedTypes : ["__none__"]);
+    }
+    if (ocSelectedCenters) {
+      query = query.in("center_name", ocSelectedCenters.length ? ocSelectedCenters : ["__none__"]);
+    }
+    if (ocSearchTerm) {
+      query = query.or(`guest_name.ilike.%${ocSearchTerm}%,mobile_number.ilike.%${ocSearchTerm}%`);
+    }
+    const { data, error } = await query;
+    const body = document.getElementById("ocLeadsBody");
+    if (error) {
+      body.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-red-500">Error loading reminders: ${error.message}</td></tr>`;
+      return;
+    }
+    // Keep only each lead's MOST RECENT reminder (in case of duplicates)
+    const latestBySource = {};
+    (data ?? []).forEach(r => {
+      if (!latestBySource[r.source_id] || new Date(r.created_at) > new Date(latestBySource[r.source_id].created_at)) {
+        latestBySource[r.source_id] = r;
+      }
+    });
+    ocLeadRows = Object.values(latestBySource).map(r => ({
+      id: r.source_id, guest_name: r.guest_name, mobile_number: r.mobile_number,
+      brand: null, center: r.center_name, calls_type: r.calls_type,
+      last_visit_date: null,
+      _statusLabel: r.call_types?.label || r.call_outcome, _statusDate: r.next_booking_date,
+    }));
+    ocStatusMap = {};
+    ocLeadRows.forEach(r => {
+      ocStatusMap[r.id] = { call_types: { label: r._statusLabel }, next_booking_date: r._statusDate };
+    });
+    renderOcLeadsTable();
+    return;
+  }
+
+  let query = supabase.from("other_calls_source").select("*")
+    .order(ocCurrentSort.col, { ascending: ocCurrentSort.dir === "asc" })
+    .limit(300);
+
+  if (ocSelectedTypes) {
+    query = query.in("calls_type", ocSelectedTypes.length ? ocSelectedTypes : ["__none__"]);
+  }
+  if (ocSelectedCenters) {
+    query = query.in("center", ocSelectedCenters.length ? ocSelectedCenters : ["__none__"]);
+  }
+  const ocMonthVal = document.getElementById("ocMonthFilter")?.value;
+  const ocYearVal = document.getElementById("ocYearFilter")?.value;
+  if (ocMonthVal || ocYearVal) {
+    const y = ocYearVal ? parseInt(ocYearVal, 10) : new Date().getFullYear();
+    if (ocMonthVal) {
+      const m = parseInt(ocMonthVal, 10);
+      const start = `${y}-${String(m).padStart(2, "0")}-01`;
+      const end = new Date(Date.UTC(m === 12 ? y + 1 : y, m === 12 ? 0 : m, 1)).toISOString().slice(0, 10);
+      query = query.gte("last_visit_date", start).lt("last_visit_date", end);
+    } else {
+      query = query.gte("last_visit_date", `${y}-01-01`).lt("last_visit_date", `${y + 1}-01-01`);
+    }
+  }
+  if (ocSearchTerm) {
+    query = query.or(`guest_name.ilike.%${ocSearchTerm}%,mobile_number.ilike.%${ocSearchTerm}%`);
+  }
+
+  const { data, error } = await query;
+  const body = document.getElementById("ocLeadsBody");
+  if (error) {
+    body.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-red-500">Error loading leads: ${error.message}</td></tr>`;
+    return;
+  }
+  ocLeadRows = data ?? [];
+
+  // Latest outcome per lead, so agents can see who's already been called.
+  ocStatusMap = {};
+  if (ocLeadRows.length) {
+    const ids = ocLeadRows.map(r => r.id);
+    const { data: logRows } = await supabase.from("other_call_logs")
+      .select("*, call_types(label)")
+      .in("source_id", ids)
+      .order("created_at", { ascending: false });
+    (logRows ?? []).forEach(r => {
+      if (!ocStatusMap[r.source_id]) ocStatusMap[r.source_id] = r; // first hit = most recent
+    });
+  }
+
+  renderOcLeadsTable();
+}
+
+function renderOcLeadsTable() {
+  const body = document.getElementById("ocLeadsBody");
+  if (!ocLeadRows.length) {
+    body.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-gray-400">No leads found. Upload a file to get started.</td></tr>`;
+    return;
+  }
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  body.innerHTML = ocLeadRows.map((r, idx) => {
+    const status = ocStatusMap[r.id];
+    const statusLabel = status?.call_types?.label || status?.call_outcome;
+    let monthLabel = "—", yearLabel = "—";
+    if (r.last_visit_date) {
+      const d = new Date(r.last_visit_date);
+      if (!isNaN(d)) { monthLabel = monthNames[d.getUTCMonth()]; yearLabel = d.getUTCFullYear(); }
+    }
+    return `
+      <tr class="border-t">
+        <td class="p-3"><button data-idx="${idx}" class="ocCallBtn bg-sky-600 text-white text-xs px-3 py-1.5 rounded">📞 Call</button></td>
+        <td class="p-3">${r.calls_type ?? ""}</td>
+        <td class="p-3">${r.guest_name ?? ""}</td>
+        <td class="p-3">${r.mobile_number ?? ""}</td>
+        <td class="p-3">${r.brand ?? ""}</td>
+        <td class="p-3">${r.center ?? ""}</td>
+        <td class="p-3">${r.last_visit_date ?? ""}</td>
+        <td class="p-3">${monthLabel}</td>
+        <td class="p-3">${yearLabel}</td>
+        <td class="p-3">${statusBadgeHtml(statusLabel, status?.next_booking_date)}</td>
+      </tr>`;
+  }).join("");
+
+  document.querySelectorAll(".ocCallBtn").forEach(btn => {
+    btn.addEventListener("click", () => openOcFeedback(ocLeadRows[btn.dataset.idx]));
+  });
+}
+
+function openOcFeedback(lead) {
+  currentOcLead = lead;
+  document.getElementById("ocModalError").classList.add("hidden");
+  document.getElementById("ocFeedbackForm").reset();
+  document.getElementById("oc_action_wrap").classList.add("hidden");
+  document.getElementById("oc_others_wrap").classList.add("hidden");
+  document.getElementById("oc_call_type_id").required = false;
+  document.getElementById("oc_others_note").required = false;
+  document.getElementById("oc_connected_extra_wrap").classList.add("hidden");
+  document.getElementById("oc_remarks").required = false;
+  document.getElementById("oc_called_by_name").value = localStorage.getItem("jcb_last_called_by_name") || "";
+  document.getElementById("ocModalLeadLabel").textContent =
+    `${lead.guest_name ?? "Guest"} · ${lead.mobile_number ?? ""} · ${lead.calls_type ?? ""}`;
+  document.getElementById("ocFeedbackModal").classList.remove("hidden");
+}
+
+document.getElementById("ocCloseModalBtn").addEventListener("click", () => {
+  document.getElementById("ocFeedbackModal").classList.add("hidden");
+});
+
+document.getElementById("ocFeedbackForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const callOutcome = document.getElementById("oc_call_outcome").value;
+  if (!callOutcome) return;
+
+  const isConnected = callOutcome === "Connected";
+  const callTypeIdRaw = document.getElementById("oc_call_type_id").value;
+  if (isConnected && !callTypeIdRaw) return; // Follow-up Action required once connected
+
+  const selectedActionLabel = ocCallTypes.find(t => String(t.id) === callTypeIdRaw)?.label || "";
+  const othersNote = document.getElementById("oc_others_note").value.trim();
+  if (isConnected && selectedActionLabel === "Others - Specify Reason" && !othersNote) return;
+
+  let remarks = document.getElementById("oc_remarks").value.trim();
+  if (isConnected && remarks.length < 2) return;
+  if (isConnected && selectedActionLabel === "Others - Specify Reason" && othersNote) {
+    remarks = `[Others: ${othersNote}] ${remarks}`;
+  }
+
+  const calledByName = document.getElementById("oc_called_by_name").value.trim();
+  if (calledByName.length < 2) return;
+  localStorage.setItem("jcb_last_called_by_name", calledByName);
+
+  const { error } = await supabase.from("other_call_logs").insert({
+    source_id: currentOcLead.id,
+    guest_name: currentOcLead.guest_name,
+    mobile_number: currentOcLead.mobile_number,
+    center_name: currentOcLead.center,
+    calls_type: currentOcLead.calls_type,
+    call_outcome: callOutcome,
+    call_type_id: isConnected ? Number(callTypeIdRaw) : null,
+    remarks,
+    next_booking_date: document.getElementById("oc_next_booking_date").value || null,
+    called_by: session.user.id,
+    called_by_name: calledByName,
+  });
+
+  if (error) {
+    const box = document.getElementById("ocModalError");
+    box.textContent = "Could not save call: " + error.message;
+    box.classList.remove("hidden");
+    return;
+  }
+
+  document.getElementById("ocFeedbackModal").classList.add("hidden");
+  const success = document.getElementById("ocSuccessBox");
+  success.textContent = "Call saved.";
+  success.classList.remove("hidden");
+  setTimeout(() => success.classList.add("hidden"), 3000);
+
+  refreshOtherCallsPage();
+});
+
+document.getElementById("ocSearchBtn").addEventListener("click", () => {
+  ocSearchTerm = document.getElementById("ocSearchInput").value.trim();
+  refreshOtherCallsPage();
+});
+document.getElementById("ocSearchInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); document.getElementById("ocSearchBtn").click(); }
+});
+
+document.getElementById("ocRemindersToggleBtn").addEventListener("click", () => {
+  ocRemindersMode = !ocRemindersMode;
+  const btn = document.getElementById("ocRemindersToggleBtn");
+  btn.classList.toggle("activePreset", ocRemindersMode);
+  refreshOtherCallsPage();
+});
+
+// ── Calls Type filter dropdown ──
+async function loadOcTypeFilterCheckboxes() {
+  ocTypeFilterInitialized = true;
+  const box = document.getElementById("ocTypeFilterBox");
+  // RPC-based DISTINCT — a plain select("calls_type") on this table
+  // silently truncates at Supabase's default 1000-row cap once the
+  // table grows past that (this table has 55,000+ rows), which is why
+  // newly-added calls types could go missing from the filter list.
+  const { data, error } = await supabase.rpc("get_distinct_other_calls_types");
+  if (error || !data || !data.length) {
+    box.innerHTML = `<span class="text-gray-400 text-sm">No calls types found yet.</span>`;
+    return;
+  }
+  const types = [...new Set(data.map(r => r.calls_type).filter(Boolean))].sort();
+
+  // Preserve the user's existing selection where possible; any type
+  // that's brand-new (not seen before) defaults to checked, so it
+  // shows up automatically rather than needing a manual re-check.
+  const previouslyKnown = ocSelectedTypes !== null;
+  box.innerHTML = types.map(t => {
+    const isChecked = previouslyKnown ? ocSelectedTypes.includes(t) : true;
+    return `
+      <label style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px">
+        <input type="checkbox" class="ocTypeCheckbox" value="${t}" ${isChecked ? "checked" : ""}> ${t}
+      </label>`;
+  }).join("");
+
+  const checkedNow = [...document.querySelectorAll(".ocTypeCheckbox:checked")].map(c => c.value);
+  ocSelectedTypes = checkedNow.length === types.length ? null : checkedNow;
+  document.getElementById("ocTypeFilterLabel").textContent = ocSelectedTypes === null ? "(All)" : `(${checkedNow.length})`;
+
+  document.querySelectorAll(".ocTypeCheckbox").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const checked = [...document.querySelectorAll(".ocTypeCheckbox:checked")].map(c => c.value);
+      const all = [...document.querySelectorAll(".ocTypeCheckbox")].map(c => c.value);
+      ocSelectedTypes = checked.length === all.length ? null : checked;
+      document.getElementById("ocTypeFilterLabel").textContent = ocSelectedTypes === null ? "(All)" : `(${checked.length})`;
+      refreshOtherCallsPage();
+    });
+  });
+}
+
+document.getElementById("ocTypeFilterToggle").addEventListener("click", (e) => {
+  e.stopPropagation();
+  document.getElementById("ocTypeFilterDropdown").classList.toggle("hidden");
+});
+document.getElementById("ocTypeFilterDropdown").addEventListener("click", (e) => e.stopPropagation());
+document.addEventListener("click", () => {
+  document.getElementById("ocTypeFilterDropdown").classList.add("hidden");
+});
+document.getElementById("ocTypeSelectAll").addEventListener("click", () => {
+  document.querySelectorAll(".ocTypeCheckbox").forEach(cb => (cb.checked = true));
+  ocSelectedTypes = null;
+  document.getElementById("ocTypeFilterLabel").textContent = "(All)";
+  refreshOtherCallsPage();
+});
+document.getElementById("ocTypeClearAll").addEventListener("click", () => {
+  document.querySelectorAll(".ocTypeCheckbox").forEach(cb => (cb.checked = false));
+  ocSelectedTypes = [];
+  document.getElementById("ocTypeFilterLabel").textContent = "(0)";
+  refreshOtherCallsPage();
+});
+
+// ── Center filter (checkbox dropdown, mirrors Follow-ups' pattern) ──
+// Uses get_master_brand_centers, NOT v_active_centers — other_calls_source
+// stores long brand-prefixed names ("Jcb Palladium"), while v_active_centers
+// was deliberately switched to the short form for Follow-ups. Using the
+// wrong source here would silently make every checkbox fail to match.
+async function loadOcCenterFilterCheckboxes() {
+  ocCenterFilterInitialized = true;
+  const box = document.getElementById("ocCenterFilterBox");
+  const { data, error } = await supabase.rpc("get_master_brand_centers");
+  if (error || !data || !data.length) {
+    box.innerHTML = `<span class="text-gray-400 text-sm">No centers found yet.</span>`;
+    return;
+  }
+  const centers = [...new Set(data.map(r => r.center).filter(Boolean))].sort();
+  box.innerHTML = centers.map(c => `
+    <label style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px">
+      <input type="checkbox" class="ocCenterCheckbox" value="${c}" checked> ${c}
+    </label>`).join("");
+
+  document.querySelectorAll(".ocCenterCheckbox").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const checked = [...document.querySelectorAll(".ocCenterCheckbox:checked")].map(c => c.value);
+      const all = [...document.querySelectorAll(".ocCenterCheckbox")].map(c => c.value);
+      ocSelectedCenters = checked.length === all.length ? null : checked;
+      refreshOtherCallsPage();
+    });
+  });
+}
+
+document.getElementById("ocCenterFilterToggle").addEventListener("click", (e) => {
+  e.stopPropagation();
+  document.getElementById("ocCenterFilterDropdown").classList.toggle("hidden");
+});
+document.getElementById("ocCenterFilterDropdown").addEventListener("click", (e) => e.stopPropagation());
+document.addEventListener("click", () => {
+  document.getElementById("ocCenterFilterDropdown").classList.add("hidden");
+});
+document.getElementById("ocCenterSelectAll").addEventListener("click", () => {
+  document.querySelectorAll(".ocCenterCheckbox").forEach(cb => (cb.checked = true));
+  ocSelectedCenters = null;
+  refreshOtherCallsPage();
+});
+document.getElementById("ocCenterClearAll").addEventListener("click", () => {
+  document.querySelectorAll(".ocCenterCheckbox").forEach(cb => (cb.checked = false));
+  ocSelectedCenters = [];
+  refreshOtherCallsPage();
+});
+
+// ── Month / Year filters (based on Last Visit/Lead Date) ──
+(function populateOcYearFilter() {
+  const sel = document.getElementById("ocYearFilter");
+  const currentYear = new Date().getFullYear();
+  for (let y = currentYear + 1; y >= currentYear - 4; y--) {
+    const opt = document.createElement("option");
+    opt.value = String(y);
+    opt.textContent = String(y);
+    sel.appendChild(opt);
+  }
+})();
+document.getElementById("ocMonthFilter").addEventListener("change", refreshOtherCallsPage);
+document.getElementById("ocYearFilter").addEventListener("change", refreshOtherCallsPage);
+
+// ── Sortable column headers for the Other Calls Leads table ──
+// Deliberately a separate class/handler from Follow-ups' .sortableCol —
+// that one is wired specifically to Follow-ups' own loadClients().
+document.querySelectorAll(".ocSortableCol").forEach(el => {
+  el.addEventListener("click", () => {
+    const col = el.dataset.col;
+    if (ocCurrentSort.col === col) {
+      ocCurrentSort.dir = ocCurrentSort.dir === "asc" ? "desc" : "asc";
+    } else {
+      ocCurrentSort = { col, dir: "asc" };
+    }
+    document.querySelectorAll(".ocSortArrow").forEach(a => (a.textContent = ""));
+    const arrow = el.querySelector(".ocSortArrow");
+    if (arrow) arrow.textContent = ocCurrentSort.dir === "asc" ? "▲" : "▼";
+    loadOcLeads();
+  });
+});
+
+// ── Upload (.xlsx) ──
+document.getElementById("ocUploadBtn").addEventListener("click", async () => {
+  const input = document.getElementById("ocUploadInput");
+  const statusEl = document.getElementById("ocUploadStatus");
+  const file = input.files[0];
+  if (!file) { statusEl.textContent = "Choose a file first."; return; }
+
+  const modeEl = document.querySelector('input[name="ocUploadMode"]:checked');
+  const wipeFirst = modeEl && modeEl.value === "wipe";
+
+  if (wipeFirst) {
+    const ok = confirm("This will permanently delete ALL existing Other Calls leads before uploading this file. This cannot be undone. Continue?");
+    if (!ok) { statusEl.textContent = "Upload cancelled."; return; }
+    statusEl.textContent = "Wiping existing leads…";
+    const { error: wipeError } = await supabase
+      .from("other_calls_source")
+      .delete()
+      .not("id", "is", null); // id (primary key) is never null, so this matches every row — PostgREST requires some filter on DELETE
+    if (wipeError) {
+      statusEl.textContent = "Wipe failed: " + wipeError.message;
+      return;
+    }
+  }
+
+  statusEl.textContent = "Reading file…";
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: "array", cellDates: true });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+    // Excel headers are used as object keys exactly as typed in the file.
+    // A stray space, different casing, or copy-paste artifact in the header
+    // cell (e.g. "Brand " or "BRAND") would otherwise make r["Brand"] come
+    // back undefined with no visible error. Build a normalized lookup so
+    // small header formatting differences can't silently drop a column.
+    const normKey = (k) => k.toString().replace(/\s+/g, " ").trim().toLowerCase();
+    const getField = (row, ...candidates) => {
+      const map = {};
+      for (const k of Object.keys(row)) map[normKey(k)] = row[k];
+      for (const c of candidates) {
+        const v = map[normKey(c)];
+        if (v !== undefined) return v;
+      }
+      return null;
+    };
+
+    const toDateStr = (v) => {
+      if (!v) return null;
+      if (v instanceof Date) return v.toISOString().slice(0, 10);
+      const d = new Date(v);
+      return isNaN(d) ? null : d.toISOString().slice(0, 10);
+    };
+    // Normalize "Month" to the 1st of its month, so "same month" comparisons
+    // are reliable even if the file has a different day-of-month per row.
+    const toMonthStr = (v) => {
+      if (!v) return null;
+      const d = v instanceof Date ? v : new Date(v);
+      if (isNaN(d)) return null;
+      return new Date(Date.UTC(d.getFullYear(), d.getMonth(), 1)).toISOString().slice(0, 10);
+    };
+    const norm = (s) => (s ?? "").toString().replace(/\s+/g, " ").trim().toLowerCase();
+
+    let payload = rows
+      .map(r => ({
+        brand: getField(r, "Brand"),
+        center: getField(r, "Center"),
+        guest_name: getField(r, "Guestname", "Guest Name"),
+        mobile_number: (() => { const v = getField(r, "MobileNumber", "Mobile Number"); return v != null ? String(v).trim() : null; })(),
+        last_visit_date: toDateStr(getField(r, "Last Visit/Lead Date")),
+        lead_month: toMonthStr(getField(r, "Month")),
+        calls_type: getField(r, "Calls Type"),
+        uploaded_by: session.user.id,
+      }))
+      .filter(r => r.center && r.calls_type && (r.mobile_number || r.guest_name));
+
+    if (!payload.length) {
+      statusEl.textContent = "No valid rows found in the file (need at least Center, Calls Type, and a name or mobile number).";
+      return;
+    }
+
+    // ── Master-data check: Brand + Center must exist in client_followup_source ──
+    statusEl.textContent = "Checking Brand/Center against master data…";
+    const { data: masterRows, error: masterError } = await supabase.rpc("get_master_brand_centers");
+    if (masterError) throw new Error("Could not load master Brand/Center list: " + masterError.message);
+    const masterCenters = new Set((masterRows ?? []).map(m => norm(m.center)));
+    const masterBrands = new Set((masterRows ?? []).map(m => norm(m.brand)));
+
+    const rejectedNotMaster = [];
+    payload = payload.filter(r => {
+      const ok = masterCenters.has(norm(r.center)) && masterBrands.has(norm(r.brand));
+      if (!ok) rejectedNotMaster.push(r);
+      return ok;
+    });
+
+    // ── Duplicate check: same mobile number + same month ──────────────
+    // 1) De-dupe within the file itself (keep first occurrence)
+    const seenInFile = new Set();
+    const rejectedInFileDupe = [];
+    payload = payload.filter(r => {
+      if (!r.mobile_number || !r.lead_month) return true; // nothing to dedupe against
+      const key = `${r.mobile_number}||${r.lead_month}`;
+      if (seenInFile.has(key)) { rejectedInFileDupe.push(r); return false; }
+      seenInFile.add(key);
+      return true;
+    });
+
+    // 2) De-dupe against what's already in the database
+    // Chunked (not one big .in() call) — a single request listing every
+    // mobile number in a large file builds a URL long enough to fail
+    // outright ("TypeError: Failed to fetch") before it even reaches
+    // Postgres, rather than returning a proper error.
+    const mobilesInBatch = [...new Set(payload.map(r => r.mobile_number).filter(Boolean))];
+    let existingKeys = new Set();
+    const dupCheckChunkSize = 200;
+    for (let i = 0; i < mobilesInBatch.length; i += dupCheckChunkSize) {
+      const mobileChunk = mobilesInBatch.slice(i, i + dupCheckChunkSize);
+      statusEl.textContent = `Checking existing leads… (${Math.min(i + dupCheckChunkSize, mobilesInBatch.length)}/${mobilesInBatch.length})`;
+      const { data: existingRows, error: existingError } = await supabase
+        .from("other_calls_source")
+        .select("mobile_number, lead_month")
+        .in("mobile_number", mobileChunk);
+      if (existingError) throw new Error("Could not check existing leads: " + existingError.message);
+      (existingRows ?? []).forEach(r => existingKeys.add(`${r.mobile_number}||${r.lead_month}`));
+    }
+    const rejectedAlreadyExists = [];
+    payload = payload.filter(r => {
+      if (!r.mobile_number || !r.lead_month) return true;
+      const key = `${r.mobile_number}||${r.lead_month}`;
+      if (existingKeys.has(key)) { rejectedAlreadyExists.push(r); return false; }
+      return true;
+    });
+
+    if (!payload.length) {
+      const sample = rejectedNotMaster.slice(0, 5).map(r => `"${r.brand}" / "${r.center}"`).join(", ");
+      statusEl.textContent = `Nothing to upload — ${rejectedNotMaster.length} row(s) failed Brand/Center check (${sample || "no values read"}), ${rejectedInFileDupe.length + rejectedAlreadyExists.length} row(s) were duplicates.`;
+      return;
+    }
+
+    statusEl.textContent = `Uploading ${payload.length} rows…`;
+
+    // Insert in batches, upserting on (mobile_number, lead_month) as a
+    // DB-level backstop against duplicates in case of concurrent uploads.
+    const chunkSize = 500;
+    let inserted = 0;
+    for (let i = 0; i < payload.length; i += chunkSize) {
+      const chunk = payload.slice(i, i + chunkSize);
+      const { error } = await supabase.from("other_calls_source")
+        .upsert(chunk, { onConflict: "mobile_number,lead_month", ignoreDuplicates: true });
+      if (error) throw error;
+      inserted += chunk.length;
+      statusEl.textContent = `Uploaded ${inserted}/${payload.length}…`;
+    }
+
+    const skippedTotal = rejectedNotMaster.length + rejectedInFileDupe.length + rejectedAlreadyExists.length;
+    statusEl.textContent = skippedTotal
+      ? `Done — ${inserted} leads uploaded. Skipped ${skippedTotal}: ${rejectedNotMaster.length} not in Brand/Center master, ${rejectedInFileDupe.length + rejectedAlreadyExists.length} duplicate (same mobile + month).`
+      : `Done — ${inserted} leads uploaded.`;
+    input.value = "";
+    ocTypeFilterInitialized = false; // pick up any new calls types next time Other Calls is opened
+  } catch (err) {
+    const extra = [err.code, err.details, err.hint].filter(Boolean).join(" | ");
+    statusEl.textContent = "Upload failed: " + err.message + (extra ? ` (${extra})` : "");
+  }
+});
+
+// ── Other Calls: KPI cards + day-wise chart ──
+// Driven by the same Calls Type filter (ocSelectedTypes) and date range
+// (rangeStart/rangeEnd) as the leads list, so switching the filter here
+// updates KPIs, chart, AND the table together.
+async function loadOcDashboardStats() {
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const thirtyDaysAgo = new Date(today); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+  const dailyStart = isoDate(thirtyDaysAgo);
+  const dailyEnd = isoDate(today);
+  const typeFilter = ocSelectedTypes; // null = all, [] = none selected, [...] = subset
+
+  let totalLeadsQuery = supabase.from("other_calls_source").select("id", { count: "exact", head: true });
+  if (typeFilter) {
+    totalLeadsQuery = totalLeadsQuery.in("calls_type", typeFilter.length ? typeFilter : ["__none__"]);
+  }
+
+  const [
+    { count: totalLeadsCount },
+    { data: mtdSummary, error: e1 },
+    { data: callTypeSummary, error: e2 },
+    { data: dailyData, error: e3 },
+    { data: ocOutcomeSummary, error: e4 },
+  ] = await Promise.all([
+    totalLeadsQuery,
+    supabase.rpc("get_other_calls_type_summary", { p_start: isoDate(monthStart), p_end: isoDate(today), p_calls_type: typeFilter }),
+    supabase.rpc("get_other_calls_type_summary", { p_start: rangeStart, p_end: rangeEnd, p_calls_type: typeFilter }),
+    supabase.rpc("get_other_calls_daily_trend", { p_start: dailyStart, p_end: dailyEnd, p_calls_type: typeFilter }),
+    supabase.rpc("get_other_calls_outcome_summary", { p_start: rangeStart, p_end: rangeEnd, p_calls_type: typeFilter }),
+  ]);
+
+  if (e1 || e2 || e3) console.error("Other Calls dashboard RPCs not found — run other_calls_setup.sql", e1 || e2 || e3);
+  if (e4) console.error("Other Calls outcome summary RPC not found — run add_appointment_booked_and_oc_outcome.sql", e4);
+
+  const mtdCount = (mtdSummary || []).reduce((sum, r) => sum + (Number(r.call_count) || 0), 0);
+  document.getElementById("ocTotalLeads").textContent = totalLeadsCount ?? 0;
+  document.getElementById("ocCallsMtd").textContent = mtdCount ?? 0;
+
+  const callTypeRows = callTypeSummary || [];
+  const callsTotal = callTypeRows.reduce((sum, r) => sum + (Number(r.call_count) || 0), 0);
+  document.getElementById("ocCallsMade").textContent = callsTotal;
+
+  const bookedTotal = callTypeRows
+    .filter(r => (r.call_type || "").toLowerCase().includes("appointment booked"))
+    .reduce((sum, r) => sum + (Number(r.call_count) || 0), 0);
+  document.getElementById("ocBookingRate").textContent = callsTotal > 0 ? `${Math.round((bookedTotal / callsTotal) * 100)}%` : "—";
+
+  // Follow-up Actions chips reuse callTypeSummary (call_type here IS the
+  // Follow-up Action label — Appointment Booked, Callback, etc.), same
+  // data already used for booking rate above.
+  renderOutcomeChips(callTypeRows, callsTotal, "ocFollowupActionChipsBox");
+
+  const outcomeRows = ocOutcomeSummary || [];
+  const outcomeCallsTotal = outcomeRows.reduce((sum, r) => sum + (Number(r.call_count) || 0), 0);
+  renderCallOutcomeChips(outcomeRows, outcomeCallsTotal, "ocCallOutcomeChipsBox");
+
+  renderOtherCallsChart(dailyData || []);
+}
+
+// Consistent color per Calls Type, assigned in sorted order so it
+// stays stable across reloads (doesn't depend on insertion order).
+const OC_CHART_PALETTE = ["#f97316", "#4338ca", "#db2777", "#16a34a", "#0ea5e9", "#eab308", "#8b5cf6", "#ef4444", "#0d9488", "#a855f7"];
+
+function renderOtherCallsChart(rows) {
+  const canvas = document.getElementById("otherCallsChart");
+  if (!rows.length) return;
+
+  const dateSet = new Set();
+  const typeSet = new Set();
+  rows.forEach(r => {
+    dateSet.add(r.trend_date);
+    if (r.calls_type) typeSet.add(r.calls_type);
+  });
+  const dates = [...dateSet].sort();
+  const types = [...typeSet].sort();
+
+  const byDate = {};
+  rows.forEach(r => {
+    if (!r.calls_type) return;
+    if (!byDate[r.trend_date]) byDate[r.trend_date] = {};
+    byDate[r.trend_date][r.calls_type] = (byDate[r.trend_date][r.calls_type] || 0) + (Number(r.call_count) || 0);
+  });
+
+  const labels = dates.map(d => d.slice(5));
+  const datasets = types.map((type, i) => ({
+    label: type,
+    data: dates.map(d => (byDate[d] && byDate[d][type]) || 0),
+    backgroundColor: OC_CHART_PALETTE[i % OC_CHART_PALETTE.length],
+    datalabels: {
+      anchor: "center",
+      align: "center",
+      color: "#fff",
+      font: { weight: "700", size: 10 },
+      formatter: v => (v > 0 ? v : ""),
+    },
+  }));
+
+  if (otherCallsChartInstance) otherCallsChartInstance.destroy();
+
+  otherCallsChartInstance = new Chart(canvas.getContext("2d"), {
+    type: "bar",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 16 } },
+      scales: {
+        x: { stacked: true, ticks: { autoSkip: false, maxRotation: 60, minRotation: 45 } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+      },
+      plugins: {
+        legend: { position: "top" },
+      },
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// GLOBAL DATE RANGE — shared between Dashboard and Follow-ups.
+// Constrained to a 2-month window (current month + previous month)
+// to keep Supabase queries bounded.
+// ─────────────────────────────────────────────────────────────
+let rangeStart, rangeEnd, activePreset = "today";
+let dateRangeInitialized = false;
+
+function isoDate(d) {
+  // IMPORTANT: do NOT use d.toISOString() here — that converts to UTC, which
+  // during the first ~5.5 hours of any IST calendar day (midnight-5:30am IST)
+  // is still the PREVIOUS day, silently making "Today"/"MTD" one day behind.
+  // Build the date string from local calendar fields instead.
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function computePresetRange(preset) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (preset === "yesterday") {
+    const y = new Date(today); y.setDate(y.getDate() - 1);
+    return { start: isoDate(y), end: isoDate(y) };
+  }
+  if (preset === "mtd") {
+    const first = new Date(today.getFullYear(), today.getMonth(), 1);
+    return { start: isoDate(first), end: isoDate(today) };
+  }
+  if (preset === "2months") {
+    const firstPrev = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    return { start: isoDate(firstPrev), end: isoDate(today) };
+  }
+  return { start: isoDate(today), end: isoDate(today) }; // "today" default
+}
+
+function updateRangeSummaryLabel() {
+  const label = document.getElementById("rangeSummaryLabel");
+  label.textContent = rangeStart === rangeEnd ? `Showing: ${rangeStart}` : `Showing: ${rangeStart} → ${rangeEnd}`;
+}
+
+function refreshCurrentView() {
+  const page = (location.hash || "#dashboard").replace("#", "");
+  if (page === "dashboard") loadDashboard();
+  if (page === "followups") loadClients();
+}
+
+function applyDateRange(preset, customStart, customEnd) {
+  if (preset) {
+    const r = computePresetRange(preset);
+    rangeStart = r.start; rangeEnd = r.end;
+    activePreset = preset;
+  } else {
+    rangeStart = customStart; rangeEnd = customEnd;
+    activePreset = "custom";
+    const spanDays = (new Date(rangeEnd) - new Date(rangeStart)) / 86400000;
+    if (spanDays > 62) {
+      const clampedStart = new Date(rangeEnd); clampedStart.setDate(clampedStart.getDate() - 62);
+      rangeStart = isoDate(clampedStart);
+      alert("Date range is limited to 2 months. Start date adjusted to " + rangeStart);
+    }
+    if (spanDays < 0) { alert("Start date must be before end date."); return; }
+  }
+  document.getElementById("rangeStartInput").value = rangeStart;
+  document.getElementById("rangeEndInput").value = rangeEnd;
+  document.querySelectorAll(".rangePresetBtn").forEach(b => {
+    b.classList.toggle("activePreset", b.dataset.preset === activePreset);
+  });
+  updateRangeSummaryLabel();
+  refreshCurrentView();
+}
+
+function initDateRangeBar() {
+  if (dateRangeInitialized) return;
+  dateRangeInitialized = true;
+
+  const minAllowed = computePresetRange("2months").start;
+  document.getElementById("rangeStartInput").min = minAllowed;
+  document.getElementById("rangeEndInput").min = minAllowed;
+
+  document.querySelectorAll(".rangePresetBtn").forEach(btn => {
+    btn.addEventListener("click", () => applyDateRange(btn.dataset.preset));
+  });
+  document.getElementById("applyCustomRangeBtn").addEventListener("click", () => {
+    const s = document.getElementById("rangeStartInput").value;
+    const e = document.getElementById("rangeEndInput").value;
+    if (!s || !e) return;
+    applyDateRange(null, s, e);
+  });
+
+  applyDateRange("today"); // default, per requirements
+}
+
+// ─────────────────────────────────────────────────────────────
+// LOGIN VIEW / BOOTSTRAP
+// ─────────────────────────────────────────────────────────────
+function showLogin() {
+  document.getElementById("appShell").classList.add("hidden");
+  document.getElementById("forcePasswordView").classList.add("hidden");
+  document.getElementById("loginView").classList.remove("hidden");
+}
+
+function showForcePasswordChange() {
+  document.getElementById("appShell").classList.add("hidden");
+  document.getElementById("loginView").classList.add("hidden");
+  document.getElementById("forcePasswordView").classList.remove("hidden");
+}
+
+function showApp() {
+  document.getElementById("loginView").classList.add("hidden");
+  document.getElementById("forcePasswordView").classList.add("hidden");
+  document.getElementById("appShell").classList.remove("hidden");
+  initDateRangeBar();
+  router();
+}
+
+// After login/session-restore, route to the forced password-change
+// screen if this account hasn't set its own password yet; otherwise
+// go straight into the app as normal.
+function enterAppRespectingPasswordFlag() {
+  if (profile.must_change_password) {
+    showForcePasswordChange();
+  } else {
+    location.hash = location.hash || "#dashboard";
+    showApp();
+  }
+}
+
+document.getElementById("forcePasswordForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const box = document.getElementById("forcePwErrorBox");
+  box.classList.add("hidden");
+  const newPassword = document.getElementById("fp_new_password").value;
+  const confirmPassword = document.getElementById("fp_confirm_password").value;
+
+  if (newPassword !== confirmPassword) {
+    box.textContent = "Passwords do not match.";
+    box.classList.remove("hidden");
+    return;
+  }
+
+  if (newPassword === "admin@123") {
+    box.textContent = "Please choose a different password — don't keep the default.";
+    box.classList.remove("hidden");
+    return;
+  }
+
+  const { error: updateAuthError } = await supabase.auth.updateUser({ password: newPassword });
+  if (updateAuthError) {
+    box.textContent = updateAuthError.message;
+    box.classList.remove("hidden");
+    return;
+  }
+
+  const { error: updateProfileError } = await supabase
+    .from("profiles")
+    .update({ must_change_password: false })
+    .eq("id", session.user.id);
+  if (updateProfileError) {
+    box.textContent = "Password was set, but couldn't finish setup: " + updateProfileError.message;
+    box.classList.remove("hidden");
+    return;
+  }
+
+  profile.must_change_password = false;
+  document.getElementById("forcePasswordForm").reset();
+  location.hash = "#dashboard";
+  showApp();
+});
+
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    const box = document.getElementById("errorBox");
+    box.textContent = error.message === "Invalid login credentials" ? "Invalid email or password." : error.message;
+    box.classList.remove("hidden");
+    return;
+  }
+  session = data.session;
+  profile = await getProfile(session.user.id);
+  if (!profile) {
+    const box = document.getElementById("errorBox");
+    box.textContent = "Login succeeded but no profile record was found for this account.";
+    box.classList.remove("hidden");
+    await supabase.auth.signOut();
+    return;
+  }
+  location.hash = "#dashboard";
+  enterAppRespectingPasswordFlag();
+});
+
+// Boot: check for an existing session on page load
+const { data: { session: existingSession } } = await supabase.auth.getSession();
+if (existingSession) {
+  session = existingSession;
+  profile = await getProfile(session.user.id);
+  if (profile) { enterAppRespectingPasswordFlag(); } else { await supabase.auth.signOut(); showLogin(); }
+} else {
+  showLogin();
+}
+</script>
+</body>
+</html>
